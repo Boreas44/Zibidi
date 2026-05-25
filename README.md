@@ -26,7 +26,10 @@ Tarayıcı: [http://localhost:3000](http://localhost:3000)
 5. `npm run dev` yeniden başlat.
 
 - **Kayıt ol** / **Giriş yap**: sağ üst veya sidebar hesap alanı
-- **Kayıt**: e-postana **6 haneli kod** gider → panelde doğrula (Supabase şablonu: `supabase/EMAIL_OTP_SETUP.md`)
+- **Kayıt**: e-postana **6 haneli kod** gider → panelde doğrula  
+  - Şablon / kendi mail tasarımı: `supabase/email-templates/README.md`  
+  - Hızlı kurulum: `supabase/EMAIL_OTP_SETUP.md`
+  - Şifremi unuttum: `supabase/PASSWORD_RESET_SETUP.md`
 - Profil fotoğrafı: stock yok; adının baş harfleri (ör. `JD`)
 - Post atmak için giriş gerekli
 

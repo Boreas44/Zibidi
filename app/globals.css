@@ -206,8 +206,24 @@
   animation: auth-header-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+@keyframes auth-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.auth-step-enter {
+  animation: auth-step-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .auth-header-enter {
+  .auth-header-enter,
+  .auth-step-enter {
     animation: none;
   }
 }

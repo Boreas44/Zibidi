@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import { getAuthSiteUrl } from "@/lib/auth/site-url"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
+import {
+  isStrongPassword,
+  PASSWORD_STRONG_ERROR,
+} from "@/lib/password-strength"
 
 export type AuthResult =
   | { success: true; message?: string; requiresOtp?: boolean }
@@ -33,8 +38,8 @@ export async function startSignUpAction(input: {
     if (!email || !input.password || !displayName) {
       return { success: false, error: "All fields are required." }
     }
-    if (input.password.length < 6) {
-      return { success: false, error: "Password must be at least 6 characters." }
+    if (!isStrongPassword(input.password)) {
+      return { success: false, error: PASSWORD_STRONG_ERROR }
     }
 
     const supabase = await createClient()
@@ -83,8 +88,8 @@ export async function verifySignUpOtpAction(input: {
     if (token.length !== 6) {
       return { success: false, error: "Enter the full 6-digit code." }
     }
-    if (!input.password || input.password.length < 6) {
-      return { success: false, error: "Password must be at least 6 characters." }
+    if (!isStrongPassword(input.password)) {
+      return { success: false, error: PASSWORD_STRONG_ERROR }
     }
     if (!displayName) {
       return { success: false, error: "Display name is required." }
@@ -139,6 +144,7 @@ export async function verifySignUpOtpAction(input: {
 /** Kayıt: doğrulama kodunu yeniden gönder. */
 export async function resendSignUpOtpAction(input: {
   email: string
+  displayName?: string
 }): Promise<AuthResult> {
   if (!isSupabaseConfigured()) {
     return { success: false, error: "Supabase is not configured." }
@@ -151,9 +157,13 @@ export async function resendSignUpOtpAction(input: {
     }
 
     const supabase = await createClient()
+    const displayName = input.displayName?.trim()
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        ...(displayName ? { data: { display_name: displayName } } : {}),
+      },
     })
 
     if (error) {
@@ -163,6 +173,82 @@ export async function resendSignUpOtpAction(input: {
     return { success: true, message: "A new code was sent to your email." }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not resend code."
+    return { success: false, error: message }
+  }
+}
+
+/** Şifre sıfırlama: e-postaya reset linki gönderir. */
+export async function requestPasswordResetAction(input: {
+  email: string
+}): Promise<AuthResult> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, error: "Supabase is not configured." }
+  }
+
+  try {
+    const email = normalizeEmail(input.email)
+    if (!email) {
+      return { success: false, error: "Email is required." }
+    }
+
+    const supabase = await createClient()
+    const redirectTo = `${getAuthSiteUrl()}/auth/callback?next=/auth/reset-password`
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    })
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return {
+      success: true,
+      message: "If an account exists for this email, we sent a reset link.",
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not send reset email."
+    return { success: false, error: message }
+  }
+}
+
+/** E-posta linkinden geldikten sonra yeni şifre kaydet. */
+export async function updatePasswordAction(input: {
+  password: string
+}): Promise<AuthResult> {
+  if (!isSupabaseConfigured()) {
+    return { success: false, error: "Supabase is not configured." }
+  }
+
+  try {
+    if (!isStrongPassword(input.password)) {
+      return { success: false, error: PASSWORD_STRONG_ERROR }
+    }
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return {
+        success: false,
+        error: "Session expired. Open the reset link from your email again.",
+      }
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: input.password,
+    })
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePath("/")
+    return { success: true, message: "Password updated. You can sign in now." }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Could not update password."
     return { success: false, error: message }
   }
 }

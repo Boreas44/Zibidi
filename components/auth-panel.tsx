@@ -19,11 +19,17 @@ import {
   startSignUpAction,
   verifySignUpOtpAction,
   resendSignUpOtpAction,
+  requestPasswordResetAction,
 } from "@/app/actions/auth"
 import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
-import { LayoutGroup, motion } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { PasswordStrengthMeter } from "@/components/password-strength-meter"
+import {
+  isStrongPassword,
+  PASSWORD_STRONG_ERROR,
+} from "@/lib/password-strength"
 
 interface AuthPanelProps {
   isOpen: boolean
@@ -32,6 +38,7 @@ interface AuthPanelProps {
 }
 
 type SignUpStep = "form" | "otp"
+type ForgotStep = "form" | "sent"
 
 const AUTH_SPRING = "cubic-bezier(0.32, 0.72, 0, 1)"
 const AUTH_SLIDE_MS = 320
@@ -49,12 +56,14 @@ export function AuthPanel({
   const [password, setPassword] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [otp, setOtp] = useState("")
+  const [forgotStep, setForgotStep] = useState<ForgotStep | null>(null)
 
   useEffect(() => {
     if (isOpen) {
       setMode(defaultMode)
       setSignUpStep("form")
       setOtp("")
+      setForgotStep(null)
     }
   }, [isOpen, defaultMode])
 
@@ -64,6 +73,7 @@ export function AuthPanel({
     setDisplayName("")
     setOtp("")
     setSignUpStep("form")
+    setForgotStep(null)
   }
 
   const handleClose = () => {
@@ -93,6 +103,10 @@ export function AuthPanel({
 
   const handleStartSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!isStrongPassword(password)) {
+      toast.error(PASSWORD_STRONG_ERROR)
+      return
+    }
     setIsLoading(true)
     try {
       const result = await startSignUpAction({ email, password, displayName })
@@ -122,6 +136,10 @@ export function AuthPanel({
       toast.error("Enter the 6-digit code")
       return
     }
+    if (!isStrongPassword(password)) {
+      toast.error(PASSWORD_STRONG_ERROR)
+      return
+    }
     setIsLoading(true)
     try {
       const result = await verifySignUpOtpAction({
@@ -148,7 +166,7 @@ export function AuthPanel({
   const handleResendOtp = async () => {
     setIsLoading(true)
     try {
-      const result = await resendSignUpOtpAction({ email })
+      const result = await resendSignUpOtpAction({ email, displayName })
       if (result.success) {
         toast.success(result.message ?? "Code sent")
         setOtp("")
@@ -167,19 +185,50 @@ export function AuthPanel({
     setMode(next)
     setSignUpStep("form")
     setOtp("")
+    setForgotStep(null)
+  }
+
+  const handleRequestReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const result = await requestPasswordResetAction({ email })
+      if (result.success) {
+        setForgotStep("sent")
+        toast.success(result.message ?? "Check your email")
+      } else {
+        toast.error(result.error)
+      }
+    } catch {
+      toast.error("Something went wrong.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const headerKey =
     signUpStep === "otp"
       ? "otp"
-      : mode === "signup"
-        ? "signup"
-        : "signin"
+      : forgotStep === "form"
+        ? "forgot"
+        : forgotStep === "sent"
+          ? "forgot-sent"
+          : mode === "signup"
+            ? "signup"
+            : "signin"
 
   const headerCopy = {
     otp: {
       title: "Verify your email",
       description: `We sent a 6-digit code to ${email}`,
+    },
+    forgot: {
+      title: "Reset password",
+      description: "Enter your account email and we will send you a reset link.",
+    },
+    "forgot-sent": {
+      title: "Check your email",
+      description: `If an account exists for ${email}, we sent a password reset link.`,
     },
     signup: {
       title: "Create account",
@@ -229,7 +278,73 @@ export function AuthPanel({
             style={{ transitionDuration: `${AUTH_SLIDE_MS}ms` }}
             aria-hidden={signUpStep === "otp"}
           >
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+            {forgotStep ? (
+              <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+                {forgotStep === "form" ? (
+                  <form onSubmit={handleRequestReset} className="flex flex-1 flex-col">
+                    <div className="mb-4">
+                      <Label
+                        htmlFor="forgot-email"
+                        className="text-[13px] text-muted-foreground"
+                      >
+                        Email
+                      </Label>
+                      <Input
+                        id="forgot-email"
+                        variant="ios"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="mt-1"
+                        autoComplete="email"
+                        required
+                      />
+                    </div>
+                    <DrawerFooter className="mt-auto flex-col gap-2 border-t border-border px-0 pb-0 pt-4">
+                      <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Sending…" : "Send reset link"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ios"
+                        className="w-full"
+                        disabled={isLoading}
+                        onClick={() => setForgotStep(null)}
+                      >
+                        Back to sign in
+                      </Button>
+                    </DrawerFooter>
+                  </form>
+                ) : (
+                  <div className="flex flex-1 flex-col">
+                    <div className="mb-6 flex justify-center">
+                      <div className="rounded-full bg-ios-fill-secondary p-4">
+                        <Mail className="h-8 w-8 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-center text-[15px] leading-relaxed text-muted-foreground">
+                      Open the link in your email to choose a new password. The link
+                      expires after a while.
+                    </p>
+                    <DrawerFooter className="mt-auto flex-col gap-2 border-t border-border px-0 pb-0 pt-6">
+                      <Button
+                        type="button"
+                        variant="ios"
+                        className="w-full"
+                        onClick={() => {
+                          setForgotStep(null)
+                          setMode("signin")
+                        }}
+                      >
+                        Back to sign in
+                      </Button>
+                    </DrawerFooter>
+                  </div>
+                )}
+              </div>
+            ) : (
+            <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
               <ModeTabs mode={mode} onSwitch={switchMode} disabled={isLoading} />
 
               <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -257,6 +372,16 @@ export function AuthPanel({
                       passwordLabel="Password"
                       idPrefix="signin"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotStep("form")
+                        setMode("signin")
+                      }}
+                      className="ios-tap mb-2 w-full text-left text-[13px] font-medium text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
                     <DrawerFooter className="mt-auto border-t border-border px-0 pb-0 pt-4">
                       <Button type="submit" className="w-full" disabled={isLoading}>
                         {isLoading && mode === "signin"
@@ -278,11 +403,16 @@ export function AuthPanel({
                       displayName={displayName}
                       setDisplayName={setDisplayName}
                       showName
-                      passwordLabel="Password (min. 6)"
+                      showStrengthMeter
+                      passwordLabel="Password"
                       idPrefix="signup"
                     />
                     <DrawerFooter className="mt-auto flex-col gap-2 border-t border-border px-0 pb-0 pt-4">
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading || !isStrongPassword(password)}
+                      >
                         {isLoading && mode === "signup"
                           ? "Sending code…"
                           : "Send verification code"}
@@ -292,60 +422,57 @@ export function AuthPanel({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* OTP step — slides in from the right */}
-          <div
-            className={cn(
-              "flex min-h-0 flex-1 flex-col transition-[opacity,transform] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
-              signUpStep === "otp"
-                ? "relative translate-x-0 opacity-100"
-                : "pointer-events-none absolute inset-0 translate-x-8 opacity-0"
             )}
-            style={{ transitionDuration: `${AUTH_SLIDE_MS}ms` }}
-            aria-hidden={signUpStep !== "otp"}
-          >
-            <form
-              onSubmit={handleVerifyOtp}
-              className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4"
-            >
-              <div className="mb-6 flex justify-center">
-                <div className="rounded-full bg-ios-fill-secondary p-4">
-                  <Mail className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-
-              <OtpCodeInput value={otp} onChange={setOtp} disabled={isLoading} />
-
-              <DrawerFooter className="mt-8 flex-col gap-2 border-t border-border px-0 pb-0 pt-4">
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading || otp.length !== 6}
-                >
-                  {isLoading ? "Verifying…" : "Verify & create account"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full"
-                  disabled={isLoading}
-                  onClick={handleResendOtp}
-                >
-                  Resend code
-                </Button>
-                <Button
-                  type="button"
-                  variant="ios"
-                  className="w-full"
-                  disabled={isLoading}
-                  onClick={() => setSignUpStep("form")}
-                >
-                  Change email
-                </Button>
-              </DrawerFooter>
-            </form>
           </div>
+
+          {/* OTP step — only mounted when active (avoids invisible overlay blocking clicks) */}
+          {signUpStep === "otp" && (
+            <div
+              className="auth-step-enter relative flex min-h-0 flex-1 flex-col"
+              style={{ animationDuration: `${AUTH_SLIDE_MS}ms` }}
+            >
+              <form
+                onSubmit={handleVerifyOtp}
+                className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4"
+              >
+                <div className="mb-6 flex justify-center">
+                  <div className="rounded-full bg-ios-fill-secondary p-4">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                </div>
+
+                <OtpCodeInput value={otp} onChange={setOtp} disabled={isLoading} />
+
+                <DrawerFooter className="mt-8 flex-col gap-2 border-t border-border px-0 pb-0 pt-4">
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading || otp.length !== 6}
+                  >
+                    {isLoading ? "Verifying…" : "Verify & create account"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    disabled={isLoading}
+                    onClick={handleResendOtp}
+                  >
+                    Resend code
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ios"
+                    className="w-full"
+                    disabled={isLoading}
+                    onClick={() => setSignUpStep("form")}
+                  >
+                    Change email
+                  </Button>
+                </DrawerFooter>
+              </form>
+            </div>
+          )}
         </div>
       </DrawerContent>
     </Drawer>
@@ -364,50 +491,46 @@ function ModeTabs({
   disabled?: boolean
 }) {
   return (
-    <LayoutGroup id="auth-mode-tabs">
-      <div className="relative mb-4 flex rounded-full bg-ios-fill p-1">
+    <div className="relative z-20 mb-4 shrink-0">
+      <div className="relative flex rounded-full bg-ios-fill p-1">
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute top-1 bottom-1 rounded-full bg-primary shadow-sm shadow-primary/20"
+          initial={false}
+          animate={{
+            left: mode === "signin" ? "0.25rem" : "calc(50% + 0.125rem)",
+            width: "calc(50% - 0.25rem)",
+          }}
+          transition={TAB_SPRING}
+        />
         <button
           type="button"
           disabled={disabled}
           onClick={() => onSwitch("signin")}
           className={cn(
-            "relative z-10 flex-1 rounded-full py-2 text-[13px] font-medium ios-spring transition-colors duration-200",
+            "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-[13px] font-medium ios-spring transition-colors duration-200",
             mode === "signin"
               ? "text-primary-foreground"
               : "text-muted-foreground hover:text-foreground/80"
           )}
         >
-          {mode === "signin" && (
-            <motion.div
-              layoutId="auth-mode-indicator"
-              className="absolute inset-0 z-0 rounded-full bg-primary shadow-sm shadow-primary/20"
-              transition={TAB_SPRING}
-            />
-          )}
-          <span className="relative z-10">Sign in</span>
+          Sign in
         </button>
         <button
           type="button"
           disabled={disabled}
           onClick={() => onSwitch("signup")}
           className={cn(
-            "relative z-10 flex-1 rounded-full py-2 text-[13px] font-medium ios-spring transition-colors duration-200",
+            "relative z-10 flex-1 cursor-pointer rounded-full py-2 text-[13px] font-medium ios-spring transition-colors duration-200",
             mode === "signup"
               ? "text-primary-foreground"
               : "text-muted-foreground hover:text-foreground/80"
           )}
         >
-          {mode === "signup" && (
-            <motion.div
-              layoutId="auth-mode-indicator"
-              className="absolute inset-0 z-0 rounded-full bg-primary shadow-sm shadow-primary/20"
-              transition={TAB_SPRING}
-            />
-          )}
-          <span className="relative z-10">Sign up</span>
+          Sign up
         </button>
       </div>
-    </LayoutGroup>
+    </div>
   )
 }
 
@@ -419,6 +542,7 @@ function AuthFields({
   displayName,
   setDisplayName,
   showName,
+  showStrengthMeter,
   passwordLabel,
   idPrefix,
 }: {
@@ -429,6 +553,7 @@ function AuthFields({
   displayName: string
   setDisplayName: (v: string) => void
   showName: boolean
+  showStrengthMeter?: boolean
   passwordLabel: string
   idPrefix: string
 }) {
@@ -490,8 +615,9 @@ function AuthFields({
           className="mt-1"
           autoComplete={showName ? "new-password" : "current-password"}
           required
-          minLength={6}
+          minLength={showStrengthMeter ? 8 : undefined}
         />
+        {showStrengthMeter && <PasswordStrengthMeter password={password} />}
       </div>
     </>
   )
