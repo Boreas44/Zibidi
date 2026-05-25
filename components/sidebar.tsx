@@ -46,9 +46,15 @@ export function Sidebar({
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar md:block">
       <div className="flex h-full flex-col px-4 py-7">
         <div className="mb-9 flex items-center gap-3 px-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
-            <BookOpen className="h-4 w-4 text-white" />
-          </div>
+          {/* h-9 slot — wide logo, no crop/round */}
+          <img
+            src="/LOGO.png"
+            alt="Zibidi"
+            width={120}
+            height={36}
+            className="h-9 w-auto shrink-0 object-contain object-left"
+            decoding="async"
+          />
           <span className="text-[17px] font-semibold tracking-tight text-foreground">
             Zibidi
           </span>

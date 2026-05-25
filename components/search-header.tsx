@@ -26,6 +26,14 @@ export function SearchHeader({
 
   return (
     <header className="glass sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border px-4 py-3 md:px-8 md:py-3.5">
+      <img
+        src="/LOGO.png"
+        alt="Zibidi"
+        width={96}
+        height={32}
+        className="h-8 w-auto shrink-0 object-contain object-left md:hidden"
+        decoding="async"
+      />
       <IosSearchField
         ref={searchInputRef}
         value={searchQuery}

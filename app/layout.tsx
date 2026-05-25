@@ -8,21 +8,9 @@ export const metadata: Metadata = {
   description: 'Zibidi ile içerik oluştur, keşfet ve paylaş. Apple Music tarzı modern bir blog deneyimi.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: [{ url: '/WhiteLGO.png', type: 'image/png' }],
+    apple: [{ url: '/WhiteLGO.png', type: 'image/png' }],
+    shortcut: ['/WhiteLGO.png'],
   },
 }
 

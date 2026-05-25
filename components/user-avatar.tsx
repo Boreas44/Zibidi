@@ -1,5 +1,7 @@
 import { cn } from "@/lib/utils"
-import { getInitials, hasAvatarUrl } from "@/lib/avatar"
+import { hasAvatarUrl } from "@/lib/avatar"
+
+const BRAND_PLACEHOLDER_SRC = "/WhiteLGO.png"
 
 interface UserAvatarProps {
   name: string
@@ -9,10 +11,17 @@ interface UserAvatarProps {
 }
 
 const sizeClasses = {
-  sm: "h-8 w-8 text-xs",
-  md: "h-9 w-9 text-sm",
-  lg: "h-24 w-24 text-2xl",
-  xl: "h-32 w-32 text-3xl",
+  sm: "h-8 w-8",
+  md: "h-9 w-9",
+  lg: "h-24 w-24",
+  xl: "h-32 w-32",
+}
+
+const logoScaleClasses = {
+  sm: "h-[70%] w-[70%]",
+  md: "h-[68%] w-[68%]",
+  lg: "h-[62%] w-[62%]",
+  xl: "h-[58%] w-[58%]",
 }
 
 export function UserAvatar({
@@ -33,16 +42,23 @@ export function UserAvatar({
     )
   }
 
+  /* Guest veya profil fotoğrafı yok — baş harf yerine marka maskesi */
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground ring-2 ring-primary/20",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#f0355d] ring-2 ring-[#f0355d]/30",
         sizeClass,
         className
       )}
-      aria-hidden
+      role="img"
+      aria-label={name}
     >
-      {getInitials(name)}
+      <img
+        src={BRAND_PLACEHOLDER_SRC}
+        alt=""
+        className={cn("object-contain", logoScaleClasses[size])}
+        decoding="async"
+      />
     </span>
   )
 }
