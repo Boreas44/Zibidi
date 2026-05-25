@@ -6,6 +6,10 @@ Next.js 16 blog uygulaması — TypeScript, Tailwind, shadcn/ui, Supabase.
 
 Bu proje **TypeScript** (`.ts` / `.tsx`) ile yazılır. Kaynak kodda `.js` dosyası olmaz; Next.js çalışırken derlenmiş çıktı `.next/` klasöründe oluşur.
 
+## Vercel’e yükleme
+
+Canlı deploy + Supabase (OTP + reset mail): **[VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md)**
+
 ## Kurulum
 
 ```bash
