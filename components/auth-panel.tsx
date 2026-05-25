@@ -119,7 +119,12 @@ export function AuthPanel({
     }
     setIsLoading(true)
     try {
-      const result = await verifySignUpOtpAction({ email, token: otp })
+      const result = await verifySignUpOtpAction({
+        email,
+        token: otp,
+        password,
+        displayName,
+      })
       if (result.success) {
         toast.success(result.message ?? "Verified!")
         resetAll()

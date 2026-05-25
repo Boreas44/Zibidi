@@ -9,6 +9,8 @@ import {
   User,
   UserPlus,
   LogIn,
+  Camera,
+  Trash2,
 } from "lucide-react"
 import {
   Drawer,
@@ -24,6 +26,8 @@ import { Label } from "@/components/ui/label"
 import { UserAvatar } from "@/components/user-avatar"
 import type { AppProfile } from "@/lib/auth/server"
 import { signOutAction, updateProfileAction } from "@/app/actions/auth"
+import { uploadAvatarAction, removeAvatarAction } from "@/app/actions/profile"
+import { hasAvatarUrl } from "@/lib/avatar"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -51,6 +55,7 @@ export function ProfilePanel({
   const router = useRouter()
   const [displayName, setDisplayName] = useState("")
   const [bio, setBio] = useState("")
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -58,9 +63,47 @@ export function ProfilePanel({
     if (isOpen && user) {
       setDisplayName(user.displayName)
       setBio(user.bio)
+      setAvatarUrl(user.avatarUrl)
       setIsEditing(false)
     }
   }, [isOpen, user])
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsLoading(true)
+    try {
+      const formData = new FormData()
+      formData.set("avatar", file)
+      const result = await uploadAvatarAction(formData)
+      if (result.success) {
+        setAvatarUrl(result.avatarUrl)
+        toast.success(result.message ?? "Photo updated")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      setIsLoading(false)
+      e.target.value = ""
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    setIsLoading(true)
+    try {
+      const result = await removeAvatarAction()
+      if (result.success) {
+        setAvatarUrl(null)
+        toast.success(result.message ?? "Photo removed")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleSaveProfile = async () => {
     setIsLoading(true)
@@ -110,7 +153,7 @@ export function ProfilePanel({
               <User className="h-10 w-10 text-muted-foreground" />
             </div>
             <p className="max-w-xs text-center text-[15px] text-muted-foreground">
-              No stock photos — your profile uses your name initials until you add a photo later.
+              Sign in to post, save content, and add a profile photo.
             </p>
             <div className="flex w-full max-w-xs flex-col gap-3">
               <Button
@@ -153,12 +196,45 @@ export function ProfilePanel({
 
         <div className="flex-1 overflow-y-auto p-4">
           <div className="mb-6 flex flex-col items-center rounded-2xl bg-ios-fill-secondary py-6">
-            <UserAvatar
-              name={displayName}
-              avatarUrl={user.avatarUrl}
-              size="lg"
-              className="mb-3"
-            />
+            <div className="relative mb-3">
+              <UserAvatar
+                name={displayName}
+                avatarUrl={avatarUrl}
+                size="lg"
+              />
+              {isEditing && (
+                <>
+                  <label
+                    htmlFor="profile-avatar-upload"
+                    className="ios-tap absolute -bottom-1 -right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
+                    aria-label="Upload profile photo"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </label>
+                  <input
+                    id="profile-avatar-upload"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="sr-only"
+                    disabled={isLoading}
+                    onChange={handleAvatarChange}
+                  />
+                </>
+              )}
+            </div>
+            {isEditing && hasAvatarUrl(avatarUrl) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mb-2 text-destructive"
+                disabled={isLoading}
+                onClick={handleRemoveAvatar}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remove photo
+              </Button>
+            )}
             {isEditing ? (
               <div className="w-full max-w-xs space-y-3 px-4">
                 <div>

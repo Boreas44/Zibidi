@@ -16,7 +16,7 @@ function normalizeOtp(token: string) {
   return token.replace(/\D/g, "").slice(0, 6)
 }
 
-/** Kayıt: e-postaya 6 haneli kod gönderir (Supabase Confirm signup OTP şablonu). */
+/** Kayıt: e-postaya 6 haneli kod gönderir (Magic Link şablonunda yalnızca {{ .Token }}). */
 export async function startSignUpAction(input: {
   email: string
   password: string
@@ -38,21 +38,16 @@ export async function startSignUpAction(input: {
     }
 
     const supabase = await createClient()
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password: input.password,
       options: {
+        shouldCreateUser: true,
         data: { display_name: displayName },
       },
     })
 
     if (error) {
       return { success: false, error: error.message }
-    }
-
-    if (data.session) {
-      revalidatePath("/")
-      return { success: true, message: "Account created. Welcome!" }
     }
 
     return {
@@ -66,10 +61,12 @@ export async function startSignUpAction(input: {
   }
 }
 
-/** Kayıt: 6 haneli kodu doğrula. */
+/** Kayıt: 6 haneli kodu doğrula ve şifreyi ayarla. */
 export async function verifySignUpOtpAction(input: {
   email: string
   token: string
+  password: string
+  displayName: string
 }): Promise<AuthResult> {
   if (!isSupabaseConfigured()) {
     return { success: false, error: "Supabase is not configured." }
@@ -78,6 +75,7 @@ export async function verifySignUpOtpAction(input: {
   try {
     const email = normalizeEmail(input.email)
     const token = normalizeOtp(input.token)
+    const displayName = input.displayName.trim()
 
     if (!email) {
       return { success: false, error: "Email is required." }
@@ -85,12 +83,18 @@ export async function verifySignUpOtpAction(input: {
     if (token.length !== 6) {
       return { success: false, error: "Enter the full 6-digit code." }
     }
+    if (!input.password || input.password.length < 6) {
+      return { success: false, error: "Password must be at least 6 characters." }
+    }
+    if (!displayName) {
+      return { success: false, error: "Display name is required." }
+    }
 
     const supabase = await createClient()
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: "signup",
+      type: "email",
     })
 
     if (error) {
@@ -99,6 +103,29 @@ export async function verifySignUpOtpAction(input: {
 
     if (!data.session) {
       return { success: false, error: "Verification failed. Try again or resend the code." }
+    }
+
+    const { error: passwordError } = await supabase.auth.updateUser({
+      password: input.password,
+      data: { display_name: displayName },
+    })
+
+    if (passwordError) {
+      return { success: false, error: passwordError.message }
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({
+          display_name: displayName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
     }
 
     revalidatePath("/")
@@ -124,9 +151,9 @@ export async function resendSignUpOtpAction(input: {
     }
 
     const supabase = await createClient()
-    const { error } = await supabase.auth.resend({
-      type: "signup",
+    const { error } = await supabase.auth.signInWithOtp({
       email,
+      options: { shouldCreateUser: true },
     })
 
     if (error) {
