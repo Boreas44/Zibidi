@@ -7,7 +7,7 @@ export const TAB_META: Record<
   search: {
     title: "Search",
     subtitle: "Find posts, authors, and topics",
-    emptyTitle: "Search Blogify",
+    emptyTitle: "Search Zibidi",
     emptyHint: "Type in the bar above to find posts and authors",
   },
   home: {

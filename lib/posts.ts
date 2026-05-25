@@ -7,6 +7,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/env"
 export function mapPostRowToBlogPost(row: PostRow): BlogPost {
   return {
     id: row.id,
+    userId: row.user_id,
     title: row.title,
     excerpt: row.excerpt,
     author: {
@@ -54,6 +55,36 @@ export async function fetchPosts(): Promise<BlogPost[]> {
   } catch (err) {
     console.error("[fetchPosts]", err)
     return []
+  }
+}
+
+export async function deletePost(
+  postId: string
+): Promise<{ error: string | null }> {
+  const profile = await getSessionProfile()
+  if (!profile) {
+    return { error: "Sign in to delete a post." }
+  }
+
+  if (!isSupabaseConfigured()) {
+    return { error: "Supabase is not configured." }
+  }
+
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId)
+      .eq("user_id", profile.id)
+
+    if (error) {
+      return { error: error.message }
+    }
+    return { error: null }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to delete post"
+    return { error: message }
   }
 }
 

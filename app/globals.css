@@ -56,11 +56,11 @@
   --popover-foreground: oklch(0.96 0 0);
   --primary: oklch(0.63 0.22 15);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.16 0 0);
-  --secondary-foreground: oklch(0.85 0 0);
-  --muted: oklch(0.15 0 0);
-  --muted-foreground: oklch(0.52 0 0);
-  --accent: oklch(0.18 0 0);
+  --secondary: oklch(0.21 0 0);
+  --secondary-foreground: oklch(0.88 0 0);
+  --muted: oklch(0.19 0 0);
+  --muted-foreground: oklch(0.68 0 0);
+  --accent: oklch(0.24 0 0);
   --accent-foreground: oklch(0.96 0 0);
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
@@ -80,9 +80,9 @@
   --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 0.06);
   --sidebar-ring: oklch(0.63 0.22 15);
-  --ios-fill: oklch(1 0 0 / 0.08);
-  --ios-fill-secondary: oklch(0.14 0 0);
-  --ios-separator: oklch(1 0 0 / 0.12);
+  --ios-fill: oklch(1 0 0 / 0.1);
+  --ios-fill-secondary: oklch(0.22 0 0);
+  --ios-separator: oklch(1 0 0 / 0.14);
   --glass: oklch(0.12 0 0 / 0.75);
   --glass-border: oklch(1 0 0 / 0.08);
 }
@@ -162,7 +162,7 @@
 }
 
 .ios-grouped {
-  @apply overflow-hidden rounded-2xl bg-ios-fill-secondary;
+  @apply overflow-hidden rounded-2xl bg-ios-fill-secondary text-foreground;
 }
 
 .ios-separator {
@@ -189,6 +189,27 @@
 
 .transition-smooth {
   transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes auth-header-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-header-enter {
+  animation: auth-header-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-header-enter {
+    animation: none;
+  }
 }
 
 .safe-bottom {

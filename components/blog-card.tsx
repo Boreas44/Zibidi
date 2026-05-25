@@ -1,12 +1,28 @@
 "use client"
 
-import { Heart, MessageCircle, Bookmark, MoreHorizontal } from "lucide-react"
+import { Heart, MessageCircle, Bookmark, MoreHorizontal, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { UserAvatar } from "@/components/user-avatar"
-import { hasAvatarUrl } from "@/lib/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export interface BlogPost {
   id: string
+  userId?: string | null
   title: string
   excerpt: string
   author: {
@@ -25,12 +41,23 @@ export interface BlogPost {
 
 interface BlogCardProps {
   post: BlogPost
+  isOwner?: boolean
   onLike?: (id: string) => void
   onBookmark?: (id: string) => void
+  onDelete?: (id: string) => void
+  isDeleting?: boolean
 }
 
-export function BlogCard({ post, onLike, onBookmark }: BlogCardProps) {
+export function BlogCard({
+  post,
+  isOwner = false,
+  onLike,
+  onBookmark,
+  onDelete,
+  isDeleting = false,
+}: BlogCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   return (
     <article
@@ -64,11 +91,62 @@ export function BlogCard({ post, onLike, onBookmark }: BlogCardProps) {
           </span>
         </div>
 
-        {/* More Options */}
-        <button className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 opacity-0 backdrop-blur-md transition-smooth group-hover:opacity-100 hover:bg-black/60">
-          <MoreHorizontal className="h-3.5 w-3.5 text-white" />
-          <span className="sr-only">More options</span>
-        </button>
+        {/* More Options — owner only */}
+        {isOwner && onDelete && (
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  disabled={isDeleting}
+                  className="absolute right-3 top-3 rounded-full bg-black/40 p-1.5 opacity-0 backdrop-blur-md transition-smooth group-hover:opacity-100 hover:bg-black/60 disabled:opacity-50 data-[state=open]:opacity-100"
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5 text-white" />
+                  <span className="sr-only">Post options</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[10rem]">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setConfirmDeleteOpen(true)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    &ldquo;{post.title}&rdquo; will be permanently removed. This cannot be
+                    undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={isDeleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      onDelete(post.id)
+                      setConfirmDeleteOpen(false)
+                    }}
+                  >
+                    {isDeleting ? "Deleting…" : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
       </div>
 
       {/* Content */}

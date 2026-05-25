@@ -129,7 +129,7 @@ export async function verifySignUpOtpAction(input: {
     }
 
     revalidatePath("/")
-    return { success: true, message: "Email verified. Welcome to Blogify!" }
+    return { success: true, message: "Email verified. Welcome to Zibidi!" }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Verification failed."
     return { success: false, error: message }

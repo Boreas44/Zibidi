@@ -13,7 +13,7 @@ import { ProfilePanel } from "@/components/profile-panel"
 import { AuthPanel } from "@/components/auth-panel"
 import { CategoryCards } from "@/components/category-cards"
 import { IosTabBar } from "@/components/ios/ios-tab-bar"
-import { createPostAction } from "@/app/actions/posts"
+import { createPostAction, deletePostAction } from "@/app/actions/posts"
 import { TAB_META, type AppTab } from "@/lib/tabs"
 import type { AppProfile } from "@/lib/auth/server"
 
@@ -43,6 +43,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -86,7 +87,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   const myPostCount = useMemo(
     () =>
       user
-        ? posts.filter((p) => p.author.name === user.displayName).length
+        ? posts.filter((p) => p.userId === user.id).length
         : 0,
     [posts, user]
   )
@@ -157,6 +158,29 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
           : post
       )
     )
+  }
+
+  const handleDeletePost = async (postId: string) => {
+    if (!user) {
+      toast.error("Sign in to delete a post")
+      openAuth("signin")
+      return
+    }
+    setDeletingPostId(postId)
+    try {
+      const result = await deletePostAction(postId)
+      if (result.success) {
+        setPosts((prev) => prev.filter((p) => p.id !== postId))
+        toast.success("Post deleted")
+        router.refresh()
+      } else {
+        toast.error(result.error)
+      }
+    } catch {
+      toast.error("Could not delete post.")
+    } finally {
+      setDeletingPostId(null)
+    }
   }
 
   const handleCreatePost = async (newPost: {
@@ -273,8 +297,11 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
                       <BlogCard
                         key={post.id}
                         post={post}
+                        isOwner={!!user?.id && post.userId === user.id}
                         onLike={handleLike}
                         onBookmark={handleBookmark}
+                        onDelete={handleDeletePost}
+                        isDeleting={deletingPostId === post.id}
                       />
                     ))}
                   </div>

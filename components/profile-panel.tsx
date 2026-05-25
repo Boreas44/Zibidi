@@ -152,7 +152,7 @@ export function ProfilePanel({
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-ios-fill-secondary">
               <User className="h-10 w-10 text-muted-foreground" />
             </div>
-            <p className="max-w-xs text-center text-[15px] text-muted-foreground">
+            <p className="max-w-xs text-center text-[15px] text-secondary-foreground">
               Sign in to post, save content, and add a profile photo.
             </p>
             <div className="flex w-full max-w-xs flex-col gap-3">
@@ -191,11 +191,13 @@ export function ProfilePanel({
       <DrawerContent className="flex h-full max-h-none flex-col rounded-none border-l border-border bg-card data-[vaul-drawer-direction=right]:w-full data-[vaul-drawer-direction=right]:sm:max-w-md">
         <DrawerHeader className="border-b border-border text-left">
           <DrawerTitle className="text-[20px] font-semibold">Account</DrawerTitle>
-          <DrawerDescription className="text-[13px]">{user.email}</DrawerDescription>
+          <DrawerDescription className="text-[13px] text-secondary-foreground">
+            {user.email}
+          </DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="mb-6 flex flex-col items-center rounded-2xl bg-ios-fill-secondary py-6">
+          <div className="mb-6 flex flex-col items-center rounded-2xl border border-border/50 bg-secondary py-6">
             <div className="relative mb-3">
               <UserAvatar
                 name={displayName}
@@ -238,7 +240,7 @@ export function ProfilePanel({
             {isEditing ? (
               <div className="w-full max-w-xs space-y-3 px-4">
                 <div>
-                  <Label htmlFor="profile-name" className="text-[13px] text-muted-foreground">
+                  <Label htmlFor="profile-name" className="text-[13px] text-secondary-foreground">
                     Display name
                   </Label>
                   <Input
@@ -250,7 +252,7 @@ export function ProfilePanel({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="profile-bio" className="text-[13px] text-muted-foreground">
+                  <Label htmlFor="profile-bio" className="text-[13px] text-secondary-foreground">
                     Bio
                   </Label>
                   <Input
@@ -265,7 +267,7 @@ export function ProfilePanel({
             ) : (
               <>
                 <h3 className="text-[22px] font-bold text-foreground">{user.displayName}</h3>
-                <p className="mt-2 max-w-xs text-center text-[15px] text-muted-foreground">
+                <p className="mt-2 max-w-xs text-center text-[15px] leading-relaxed text-secondary-foreground">
                   {user.bio || "No bio yet"}
                 </p>
               </>
@@ -273,27 +275,27 @@ export function ProfilePanel({
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-ios-fill-secondary px-4 py-3 text-center">
+            <div className="rounded-2xl border border-border/50 bg-secondary px-4 py-3 text-center">
               <p className="text-[22px] font-bold text-foreground">{postCount}</p>
-              <p className="text-[12px] text-muted-foreground">Posts</p>
+              <p className="text-[12px] font-medium text-secondary-foreground">Posts</p>
             </div>
-            <div className="rounded-2xl bg-ios-fill-secondary px-4 py-3 text-center">
+            <div className="rounded-2xl border border-border/50 bg-secondary px-4 py-3 text-center">
               <p className="text-[22px] font-bold text-foreground">{savedCount}</p>
-              <p className="text-[12px] text-muted-foreground">Saved</p>
+              <p className="text-[12px] font-medium text-secondary-foreground">Saved</p>
             </div>
           </div>
 
-          <section className="ios-grouped">
+          <section className="ios-grouped border border-border/50 bg-secondary">
             <button
               type="button"
               onClick={() => setIsEditing((e) => !e)}
               className="ios-tap ios-separator flex w-full items-center gap-3 px-4 py-3.5 text-left"
             >
               <User className="h-5 w-5 text-primary" />
-              <span className="flex-1 text-[17px] text-foreground">
+              <span className="flex-1 text-[17px] font-medium text-foreground">
                 {isEditing ? "Cancel edit" : "Edit profile"}
               </span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 text-secondary-foreground/80" />
             </button>
             <button
               type="button"
@@ -304,8 +306,8 @@ export function ProfilePanel({
               className="ios-tap ios-separator flex w-full items-center gap-3 px-4 py-3.5 text-left"
             >
               <Bookmark className="h-5 w-5 text-primary" />
-              <span className="flex-1 text-[17px] text-foreground">Saved</span>
-              <span className="text-[13px] text-muted-foreground">{savedCount}</span>
+              <span className="flex-1 text-[17px] font-medium text-foreground">Saved</span>
+              <span className="text-[13px] tabular-nums text-secondary-foreground">{savedCount}</span>
             </button>
             <button
               type="button"
@@ -316,8 +318,8 @@ export function ProfilePanel({
               className="ios-tap flex w-full items-center gap-3 px-4 py-3.5 text-left"
             >
               <Settings className="h-5 w-5 text-primary" />
-              <span className="flex-1 text-[17px] text-foreground">Settings</span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <span className="flex-1 text-[17px] font-medium text-foreground">Settings</span>
+              <ChevronRight className="h-4 w-4 text-secondary-foreground/80" />
             </button>
           </section>
         </div>

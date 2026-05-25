@@ -50,7 +50,7 @@ export function Sidebar({
             <BookOpen className="h-4 w-4 text-white" />
           </div>
           <span className="text-[17px] font-semibold tracking-tight text-foreground">
-            Blogify
+            Zibidi
           </span>
         </div>
 

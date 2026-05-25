@@ -4,8 +4,8 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Blogify - Your Premium Blogging Platform',
-  description: 'Discover, create, and share amazing content with Blogify. A modern blogging platform inspired by Apple Music.',
+  title: 'Zibidi — paylaş, keşfet, yaz',
+  description: 'Zibidi ile içerik oluştur, keşfet ve paylaş. Apple Music tarzı modern bir blog deneyimi.',
   generator: 'v0.app',
   icons: {
     icon: [

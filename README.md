@@ -1,4 +1,4 @@
-# Blogify (Zibidi)
+# Zibidi
 
 Next.js 16 blog uygulaması — TypeScript, Tailwind, shadcn/ui, Supabase.
 

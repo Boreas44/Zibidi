@@ -1,6 +1,6 @@
-# Supabase — 6 haneli e-posta doğrulama (kod, link değil)
+# Supabase — Zibidi 6 haneli e-posta doğrulama
 
-Blogify kayıt akışı **6 haneli OTP** kullanır. Mailde **link değil kod** gelmesi için şablonları aşağıdaki gibi ayarla.
+Zibidi kayıt akışı **6 haneli OTP** kullanır. Mailde **link değil kod** gelmesi için şablonları aşağıdaki gibi ayarla.
 
 ## Önemli kural
 
@@ -20,15 +20,18 @@ Kayıt kodu **`signInWithOtp`** ile gider → **Magic Link** e-posta şablonunu 
 
 Bu şablon kayıt doğrulama kodunu gönderir.
 
-**Subject:** `Blogify — doğrulama kodunuz`
+**Subject:**
 
-**Body (örnek):**
+```
+Zibidi — doğrulama kodunuz
+```
+
+**Body:** `supabase/email-templates/magic-link-otp.html` dosyasının tamamını kopyalayıp Supabase şablon editörüne yapıştır.
+
+Özet (kod satırı şart):
 
 ```html
-<h2>Hesabını doğrula</h2>
-<p>Kayıt kodun:</p>
-<p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">{{ .Token }}</p>
-<p>Bu kod kısa süre geçerlidir. Kodu kimseyle paylaşma.</p>
+{{ .Token }}
 ```
 
 `{{ .Token }}` = 6 haneli kod.
@@ -37,7 +40,7 @@ Bu şablon kayıt doğrulama kodunu gönderir.
 
 ## 3. (İsteğe bağlı) Confirm signup şablonu
 
-Eski `signUp` akışını kullanırsan aynı kural: yalnızca `{{ .Token }}`, link yok.
+Eski `signUp` akışını kullanırsan aynı kural: yalnızca `{{ .Token }}`, link yok. İstersen aynı HTML’i bu şablona da yapıştır.
 
 ## 4. URL Configuration
 
@@ -50,11 +53,11 @@ SQL Editor’da çalıştır: `supabase/migrations/004_avatars_storage.sql`
 
 ## 6. SMTP (production)
 
-Varsayılan Supabase maili sınırlıdır. Canlıda **Project Settings → Auth → SMTP** ile kendi mail sunucunu bağla.
+Varsayılan Supabase maili sınırlıdır. Canlıda **Project Settings → Auth → SMTP** ile kendi mail sunucunu bağla (Resend, SendGrid, vb.).
 
 ## Test
 
-1. Magic Link şablonunu kaydet (yukarıdaki gibi)
+1. Magic Link şablonunu kaydet (`magic-link-otp.html`)
 2. Uygulamada **Create account** → e-posta, ad, şifre → **Send verification code**
 3. Mailde **6 hane** görünmeli (tıklanacak link olmamalı)
 4. Kodu gir → **Verify & create account**
