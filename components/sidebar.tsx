@@ -1,6 +1,9 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import type { AppTab } from "@/lib/tabs"
+import type { AppProfile } from "@/lib/auth/server"
+import { UserAvatar } from "@/components/user-avatar"
 import {
   Search,
   Home,
@@ -12,27 +15,36 @@ import {
 } from "lucide-react"
 
 interface SidebarProps {
-  activeTab: string
-  onTabChange: (tab: string) => void
+  activeTab: AppTab
+  onTabChange: (tab: AppTab) => void
   onCreatePost: () => void
+  onOpenSettings: () => void
+  onOpenProfile: () => void
+  user?: AppProfile | null
 }
 
-const navItems = [
+const navItems: { id: AppTab; label: string; icon: typeof Search }[] = [
   { id: "search", label: "Search", icon: Search },
   { id: "home", label: "Home", icon: Home },
   { id: "feed", label: "Feed", icon: Rss },
   { id: "explore", label: "Explore", icon: Compass },
 ]
 
-const libraryItems = [
+const libraryItems: { id: AppTab; label: string; icon: typeof BookOpen }[] = [
   { id: "library", label: "Library", icon: BookOpen },
 ]
 
-export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) {
+export function Sidebar({
+  activeTab,
+  onTabChange,
+  onCreatePost,
+  onOpenSettings,
+  onOpenProfile,
+  user,
+}: SidebarProps) {
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar md:block">
       <div className="flex h-full flex-col px-4 py-7">
-        {/* Logo */}
         <div className="mb-9 flex items-center gap-3 px-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
             <BookOpen className="h-4 w-4 text-white" />
@@ -42,7 +54,6 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
           </span>
         </div>
 
-        {/* Main Navigation */}
         <nav className="flex-1 space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon
@@ -50,6 +61,7 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => onTabChange(item.id)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-smooth",
@@ -64,10 +76,8 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
             )
           })}
 
-          {/* Divider */}
           <div className="my-5 h-px bg-sidebar-border" />
 
-          {/* Library Section */}
           <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
             Library
           </p>
@@ -77,6 +87,7 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
             return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => onTabChange(item.id)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-smooth",
@@ -92,9 +103,28 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
           })}
         </nav>
 
-        {/* Bottom Actions */}
-        <div className="space-y-1.5 pt-4 border-t border-sidebar-border">
+        <div className="space-y-1.5 border-t border-sidebar-border pt-4">
           <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-smooth hover:bg-sidebar-accent"
+          >
+            <UserAvatar
+              name={user?.displayName ?? "Sign in"}
+              avatarUrl={user?.avatarUrl}
+              size="sm"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium text-foreground">
+                {user ? user.displayName : "Sign in"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {user ? "View account" : "Create account"}
+              </p>
+            </div>
+          </button>
+          <button
+            type="button"
             onClick={onCreatePost}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-primary/25 transition-smooth hover:opacity-90 active:scale-95"
           >
@@ -102,12 +132,11 @@ export function Sidebar({ activeTab, onTabChange, onCreatePost }: SidebarProps) 
             New Post
           </button>
           <button
-            onClick={() => onTabChange("settings")}
+            type="button"
+            onClick={onOpenSettings}
             className={cn(
               "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-smooth",
-              activeTab === "settings"
-                ? "bg-sidebar-accent text-primary"
-                : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
             )}
           >
             <Settings className="h-[18px] w-[18px]" />

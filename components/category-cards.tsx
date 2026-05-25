@@ -48,12 +48,12 @@ export function CategoryCards({ onCategorySelect, selectedCategory }: CategoryCa
   return (
     <section className="mb-10">
       <h2 className="mb-5 text-[22px] font-bold tracking-tight text-foreground">Browse Categories</h2>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none md:grid md:grid-cols-3 md:overflow-visible lg:grid-cols-4 xl:grid-cols-6">
         {categories.map((category) => (
           <button
             key={category.id}
             onClick={() => onCategorySelect(category.id)}
-            className={`group relative aspect-[4/3] overflow-hidden rounded-2xl transition-smooth hover:scale-[1.03] active:scale-[0.98] ${
+            className={`group relative aspect-[4/3] w-[42vw] shrink-0 snap-start overflow-hidden rounded-2xl transition-smooth hover:scale-[1.03] active:scale-[0.98] md:w-auto ${
               selectedCategory === category.id
                 ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
                 : ""

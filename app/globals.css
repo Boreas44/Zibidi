@@ -3,15 +3,58 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── shadcn semantic tokens (light) ─── */
 :root {
-  /* Apple Music dark — always dark by default */
+  --radius: 0.875rem;
+  --background: oklch(0.985 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.55 0.22 15);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.25 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.55 0.22 15);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.2 0 0);
+  --sidebar-primary: oklch(0.55 0.22 15);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.94 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.55 0.22 15);
+  /* iOS extensions */
+  --ios-fill: oklch(0 0 0 / 0.06);
+  --ios-fill-secondary: oklch(0.96 0 0);
+  --ios-separator: oklch(0 0 0 / 0.12);
+  --glass: oklch(1 0 0 / 0.72);
+  --glass-border: oklch(0 0 0 / 0.08);
+}
+
+/* ─── Apple Music / iOS dark (default app theme) ─── */
+.dark {
   --background: oklch(0.09 0 0);
   --foreground: oklch(0.96 0 0);
   --card: oklch(0.12 0 0);
   --card-foreground: oklch(0.96 0 0);
   --popover: oklch(0.13 0 0);
   --popover-foreground: oklch(0.96 0 0);
-  --primary: oklch(0.63 0.22 15);       /* Apple Music red/pink #fc3c44 */
+  --primary: oklch(0.63 0.22 15);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.16 0 0);
   --secondary-foreground: oklch(0.85 0 0);
@@ -22,11 +65,13 @@
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(1 0 0 / 0.08);
-  --input: oklch(0.15 0 0);
+  --input: oklch(1 0 0 / 0.08);
   --ring: oklch(0.63 0.22 15);
-  --radius: 0.875rem;
-
-  /* Sidebar — even darker than background */
+  --chart-1: oklch(0.63 0.22 15);
+  --chart-2: oklch(0.55 0.18 280);
+  --chart-3: oklch(0.6 0.15 200);
+  --chart-4: oklch(0.7 0.12 150);
+  --chart-5: oklch(0.65 0.2 40);
   --sidebar: oklch(0.07 0 0);
   --sidebar-foreground: oklch(0.96 0 0);
   --sidebar-primary: oklch(0.63 0.22 15);
@@ -35,15 +80,16 @@
   --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 0.06);
   --sidebar-ring: oklch(0.63 0.22 15);
-
-  /* Glass */
+  --ios-fill: oklch(1 0 0 / 0.08);
+  --ios-fill-secondary: oklch(0.14 0 0);
+  --ios-separator: oklch(1 0 0 / 0.12);
   --glass: oklch(0.12 0 0 / 0.75);
   --glass-border: oklch(1 0 0 / 0.08);
 }
 
 @theme inline {
-  --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'SF Mono', 'Geist Mono', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -63,6 +109,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -71,10 +122,16 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --color-ios-fill: var(--ios-fill);
+  --color-ios-fill-secondary: var(--ios-fill-secondary);
+  --color-ios-separator: var(--ios-separator);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {
@@ -85,10 +142,11 @@
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* Glassmorphism — dark variant */
+/* ─── iOS utilities (use semantic + ios tokens) ─── */
 .glass {
   background: var(--glass);
   backdrop-filter: blur(24px) saturate(180%);
@@ -96,7 +154,6 @@
   border: 1px solid var(--glass-border);
 }
 
-/* Ambient hero gradient — the signature Apple Music effect */
 .ambient-gradient {
   background:
     radial-gradient(ellipse 100% 55% at 50% -5%, oklch(0.63 0.22 15 / 0.22) 0%, transparent 68%),
@@ -104,22 +161,48 @@
     var(--background);
 }
 
-/* Card glow on hover */
+.ios-grouped {
+  @apply overflow-hidden rounded-2xl bg-ios-fill-secondary;
+}
+
+.ios-separator {
+  @apply border-b border-ios-separator last:border-0;
+}
+
+.ios-tap {
+  @apply min-h-11 transition-colors active:bg-accent;
+}
+
+.ios-spring {
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 .card-hover {
-  transition: box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    box-shadow 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 .card-hover:hover {
   box-shadow: 0 8px 40px oklch(0 0 0 / 0.6);
   transform: translateY(-2px);
 }
 
-/* Smooth transitions */
 .transition-smooth {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Thin Apple-style scrollbar */
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

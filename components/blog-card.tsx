@@ -2,6 +2,8 @@
 
 import { Heart, MessageCircle, Bookmark, MoreHorizontal } from "lucide-react"
 import { useState } from "react"
+import { UserAvatar } from "@/components/user-avatar"
+import { hasAvatarUrl } from "@/lib/avatar"
 
 export interface BlogPost {
   id: string
@@ -32,20 +34,27 @@ export function BlogCard({ post, onLike, onBookmark }: BlogCardProps) {
 
   return (
     <article
-      className="group relative overflow-hidden rounded-2xl bg-card border border-white/[0.07] card-hover cursor-pointer"
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card card-hover cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Cover Image */}
-      <div className="relative aspect-[16/10] overflow-hidden">
-        <img
-          src={post.coverImage}
-          alt={post.title}
-          className={`h-full w-full object-cover transition-transform duration-500 ${
-            isHovered ? "scale-[1.06]" : "scale-100"
-          }`}
-        />
-        {/* Bottom gradient fade */}
+      <div className="relative aspect-[16/10] overflow-hidden bg-ios-fill-secondary">
+        {post.coverImage?.trim() ? (
+          <img
+            src={post.coverImage}
+            alt={post.title}
+            className={`h-full w-full object-cover transition-transform duration-500 ${
+              isHovered ? "scale-[1.06]" : "scale-100"
+            }`}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-background to-primary/10">
+            <span className="text-[13px] font-medium text-muted-foreground">
+              {post.category}
+            </span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Category Badge */}
@@ -66,11 +75,7 @@ export function BlogCard({ post, onLike, onBookmark }: BlogCardProps) {
       <div className="p-4">
         {/* Author & Date */}
         <div className="mb-3 flex items-center gap-2.5">
-          <img
-            src={post.author.avatar}
-            alt={post.author.name}
-            className="h-7 w-7 rounded-full object-cover ring-1 ring-white/10"
-          />
+          <UserAvatar name={post.author.name} avatarUrl={post.author.avatar} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="truncate text-[12px] font-medium text-foreground">
               {post.author.name}
@@ -90,7 +95,7 @@ export function BlogCard({ post, onLike, onBookmark }: BlogCardProps) {
         </p>
 
         {/* Actions */}
-        <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
+        <div className="flex items-center justify-between border-t border-border pt-3">
           <div className="flex items-center gap-4">
             <button
               onClick={(e) => { e.stopPropagation(); onLike?.(post.id) }}
