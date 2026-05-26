@@ -235,6 +235,15 @@
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
+.safe-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* Full-height comment drawer: lock scroll chaining on mobile */
+.comments-sheet {
+  overscroll-behavior: contain;
+}
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;

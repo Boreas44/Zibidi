@@ -1,0 +1,127 @@
+export type CategoryId = "humor" | "ladies" | "war" | "turkey" | "eu" | "usa"
+
+export type PublicationCategory = {
+  id: CategoryId
+  /** Main category name (Humor, War, …). */
+  pillar: string
+  /** Desk / section tagline (Irony Dept., …). */
+  title: string
+  /** Regional flag emoji for web badges (Türkiye, EU, USA). */
+  flag?: string
+  gradient: string
+  image: string
+}
+
+export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
+  {
+    id: "humor",
+    pillar: "Humor",
+    title: "Irony Dept.",
+    gradient: "from-[#f7971e] via-[#ffd200] to-[#f7971e]",
+    image:
+      "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=400&h=200&fit=crop",
+  },
+  {
+    id: "ladies",
+    pillar: "Ladies",
+    title: "Her Signal",
+    gradient: "from-[#f093fb] via-[#f5576c] to-[#f093fb]",
+    image:
+      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=200&fit=crop",
+  },
+  {
+    id: "war",
+    pillar: "War",
+    title: "Hard Power",
+    gradient: "from-[#434343] via-[#1a1a1a] to-[#434343]",
+    image:
+      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=200&fit=crop",
+  },
+  {
+    id: "turkey",
+    pillar: "Türkiye",
+    title: "Anatolia Unfiltered",
+    flag: "🇹🇷",
+    gradient: "from-[#fd746c] via-[#ff9068] to-[#fd746c]",
+    image:
+      "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=400&h=200&fit=crop",
+  },
+  {
+    id: "eu",
+    pillar: "EU",
+    title: "Brussels Perspective",
+    flag: "🇪🇺",
+    gradient: "from-[#4facfe] via-[#00f2fe] to-[#4facfe]",
+    image:
+      "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=400&h=200&fit=crop",
+  },
+  {
+    id: "usa",
+    pillar: "USA",
+    title: "The US Matrix",
+    flag: "🇺🇸",
+    gradient: "from-[#a18cd1] via-[#fbc2eb] to-[#a18cd1]",
+    image:
+      "https://images.unsplash.com/photo-1485738429739-123b19dfcdc1?w=400&h=200&fit=crop",
+  },
+]
+
+const CATEGORY_BY_ID = new Map(
+  PUBLICATION_CATEGORIES.map((c) => [c.id, c] as const)
+)
+
+const LOOKUP_ALIASES = new Map<string, CategoryId>()
+
+for (const cat of PUBLICATION_CATEGORIES) {
+  LOOKUP_ALIASES.set(cat.id, cat.id)
+  LOOKUP_ALIASES.set(cat.title.toLowerCase(), cat.id)
+  LOOKUP_ALIASES.set(cat.pillar.toLowerCase(), cat.id)
+}
+
+function normalizeKey(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+export function resolveCategoryId(stored: string): CategoryId | null {
+  const key = normalizeKey(stored)
+  if (LOOKUP_ALIASES.has(key)) {
+    return LOOKUP_ALIASES.get(key)!
+  }
+  return null
+}
+
+export function isKnownCategory(stored: string): boolean {
+  return resolveCategoryId(stored) !== null
+}
+
+export function getCategoryById(id: string): PublicationCategory | undefined {
+  const resolved = resolveCategoryId(id)
+  return resolved ? CATEGORY_BY_ID.get(resolved) : undefined
+}
+
+/** Main category label for posts, filters, and badges. */
+export function getCategoryTitle(stored: string): string {
+  const cat = getCategoryById(stored)
+  return cat?.pillar ?? "Uncategorized"
+}
+
+/** Desk tagline (secondary line under the pillar). */
+export function getCategoryTagline(stored: string): string | null {
+  const cat = getCategoryById(stored)
+  return cat?.title ?? null
+}
+
+/** Flag emoji for regional categories (shown on web instead of "TR", "EU", etc.). */
+export function getCategoryFlag(stored: string): string | null {
+  const cat = getCategoryById(stored)
+  return cat?.flag ?? null
+}
+
+export function postMatchesCategory(postCategory: string, selectedId: string): boolean {
+  const postId = resolveCategoryId(postCategory)
+  const filterId = resolveCategoryId(selectedId)
+  if (postId && filterId) return postId === filterId
+  return normalizeKey(postCategory) === normalizeKey(selectedId)
+}
+
+export const DEFAULT_CATEGORY_ID: CategoryId = "humor"

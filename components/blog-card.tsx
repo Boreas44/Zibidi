@@ -9,6 +9,8 @@ import {
   Trash2,
 } from "lucide-react"
 import { useState } from "react"
+import { CategoryBadge } from "@/components/category-badge"
+import { getCategoryFlag } from "@/lib/categories"
 import { UserAvatar } from "@/components/user-avatar"
 import {
   DropdownMenu,
@@ -102,18 +104,18 @@ export function BlogCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 via-background to-primary/10">
-            <span className="text-[13px] font-medium text-muted-foreground">
-              {post.category}
-            </span>
+            <CategoryBadge category={post.category} className="text-muted-foreground" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
         {/* Category Badge */}
         <div className="absolute left-3 top-3">
-          <span className="rounded-full bg-black/50 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">
-            {post.category}
-          </span>
+          <CategoryBadge
+            category={post.category}
+            variant="pill"
+            showName={!getCategoryFlag(post.category)}
+          />
         </div>
 
         {/* More Options — owner only */}

@@ -7,6 +7,8 @@ import {
   ThumbsDown,
 } from "lucide-react"
 import type { BlogPost } from "@/components/blog-card"
+import { CategoryBadge } from "@/components/category-badge"
+import { getCategoryFlag } from "@/lib/categories"
 import { UserAvatar } from "@/components/user-avatar"
 import type { PostReactionKind } from "@/lib/post-reactions"
 
@@ -30,7 +32,6 @@ export function PostArticle({
   compact = false,
 }: PostArticleProps) {
   const body = post.content?.trim() || post.excerpt
-
   const commentsControl =
     commentsDisplay === "static" ? (
       <span className="flex items-center gap-2 text-[15px] text-muted-foreground">
@@ -66,9 +67,11 @@ export function PostArticle({
             {post.createdAt} · {post.readTime}
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-ios-fill px-3 py-1 text-[12px] font-medium text-foreground/80">
-          {post.category}
-        </span>
+        <CategoryBadge
+          category={post.category}
+          showName={!getCategoryFlag(post.category)}
+          className="shrink-0 rounded-full bg-ios-fill px-3 py-1"
+        />
       </div>
 
       <h1

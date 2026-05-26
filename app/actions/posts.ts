@@ -81,7 +81,11 @@ export async function createPostAction(input: {
       return { success: false, error: "Title and content are required." }
     }
 
-    const { post, error } = await insertPost(input)
+    const { post, error } = await insertPost({
+      title: input.title,
+      content: input.content,
+      category: input.category,
+    })
 
     if (error || !post) {
       return { success: false, error: error ?? "Could not create post." }

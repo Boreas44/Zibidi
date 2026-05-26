@@ -167,6 +167,25 @@ export interface Database {
           reaction?: string
         }
       }
+      saved_posts: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+      }
     }
   }
 }
@@ -174,5 +193,6 @@ export interface Database {
 export type PostRow = Database["public"]["Tables"]["posts"]["Row"]
 export type ReplyRow = Database["public"]["Tables"]["replies"]["Row"]
 export type PostReactionRow = Database["public"]["Tables"]["post_reactions"]["Row"]
+export type SavedPostRow = Database["public"]["Tables"]["saved_posts"]["Row"]
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]

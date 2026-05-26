@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
+import { STRIP_EXTENSION_DOM_SCRIPT } from '@/lib/strip-extension-dom'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -20,8 +22,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark bg-background">
+    <html lang="en" className="dark bg-background" suppressHydrationWarning>
       <body className="font-sans antialiased" suppressHydrationWarning>
+        <Script id="strip-extension-dom" strategy="beforeInteractive">
+          {STRIP_EXTENSION_DOM_SCRIPT}
+        </Script>
         {children}
         <Toaster theme="dark" position="top-center" richColors />
         {process.env.NODE_ENV === 'production' && <Analytics />}

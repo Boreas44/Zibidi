@@ -70,33 +70,25 @@ export function PostCommentsPanel({
   )
 
   if (elevated) {
-    if (isMobile) {
-      return (
-        <div
-          className={cn(
-            "fixed inset-x-0 bottom-0 z-[120] flex max-h-[92vh] flex-col",
-            "rounded-t-3xl border-t border-border bg-card shadow-2xl",
-            "animate-in slide-in-from-bottom duration-300"
-          )}
-          role="dialog"
-          aria-label="Comments"
-        >
-          <div className="mx-auto mt-3 h-1 w-9 shrink-0 rounded-full bg-ios-separator" />
-          {panelContent}
-        </div>
-      )
-    }
-
     return (
       <div
         className={cn(
-          "fixed inset-y-0 right-0 z-[120] flex w-full max-w-md flex-col",
-          "border-l border-border bg-card shadow-2xl",
-          "animate-in slide-in-from-right duration-300"
+          "comments-sheet fixed z-[120] flex flex-col bg-card shadow-2xl",
+          "inset-0 h-[100dvh] max-h-[100dvh] overscroll-none",
+          "animate-in slide-in-from-bottom duration-300",
+          "md:inset-y-0 md:right-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md",
+          "md:animate-in md:slide-in-from-right md:duration-300",
+          "md:rounded-none md:border-l md:border-t-0 border-border",
+          "max-md:border-t max-md:border-border max-md:pt-[env(safe-area-inset-top,0px)]"
         )}
         role="dialog"
+        aria-modal
         aria-label="Comments"
       >
+        <div
+          className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-ios-separator md:hidden"
+          aria-hidden
+        />
         {panelContent}
       </div>
     )
@@ -108,7 +100,7 @@ export function PostCommentsPanel({
       onOpenChange={(open) => !open && onClose()}
       direction={isMobile ? "bottom" : "right"}
     >
-      <DrawerContent className="flex max-h-[92vh] flex-col bg-card md:max-h-none md:h-full md:max-w-md">
+      <DrawerContent className="comments-sheet flex h-[100dvh] max-h-[100dvh] flex-col bg-card md:h-full md:max-h-none md:max-w-md">
         <DrawerHeader className="sr-only">
           <DrawerTitle>Comments</DrawerTitle>
           <DrawerDescription>Post comments and replies</DrawerDescription>

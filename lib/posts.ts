@@ -10,14 +10,17 @@ import {
   fetchUserReactionsByPostIds,
   type PostReactionKind,
 } from "@/lib/post-reactions"
+import { fetchSavedPostIdsByUser } from "@/lib/saved-posts"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { formatDateTime } from "@/lib/format-datetime"
+import { isKnownCategory, resolveCategoryId } from "@/lib/categories"
 
 export function mapPostRowToBlogPost(
   row: PostRow,
   profile?: ProfileAuthorSnapshot | null,
-  userReaction?: PostReactionKind | null
+  userReaction?: PostReactionKind | null,
+  isBookmarked = false
 ): BlogPost {
   const author = resolveAuthorFromProfile(row.user_id, profile ?? undefined, {
     name: row.author_name,
@@ -40,7 +43,7 @@ export function mapPostRowToBlogPost(
     createdAt: formatDateTime(row.created_at),
     isLiked: userReaction === "like",
     isDisliked: userReaction === "dislike",
-    isBookmarked: false,
+    isBookmarked,
   }
 }
 
@@ -71,6 +74,10 @@ export async function fetchPostById(
       return { post: null, error: null }
     }
 
+    if (!isKnownCategory(data.category)) {
+      return { post: null, error: null }
+    }
+
     const profiles = data.user_id
       ? await fetchProfileAuthorsByUserIds(supabase, [data.user_id])
       : new Map()
@@ -79,12 +86,16 @@ export async function fetchPostById(
     const reactions = session
       ? await fetchUserReactionsByPostIds(session.id, [data.id])
       : new Map<string, PostReactionKind>()
+    const saved = session
+      ? await fetchSavedPostIdsByUser(session.id, [data.id])
+      : new Set<string>()
 
     return {
       post: mapPostRowToBlogPost(
         data,
         data.user_id ? profiles.get(data.user_id) : null,
-        reactions.get(data.id) ?? null
+        reactions.get(data.id) ?? null,
+        saved.has(data.id)
       ),
       error: null,
     }
@@ -122,14 +133,20 @@ export async function fetchPosts(): Promise<BlogPost[]> {
     const reactions = session
       ? await fetchUserReactionsByPostIds(session.id, postIds)
       : new Map<string, PostReactionKind>()
+    const saved = session
+      ? await fetchSavedPostIdsByUser(session.id, postIds)
+      : new Set<string>()
 
-    return rows.map((row) =>
-      mapPostRowToBlogPost(
-        row,
-        row.user_id ? profiles.get(row.user_id) : null,
-        reactions.get(row.id) ?? null
+    return rows
+      .filter((row) => isKnownCategory(row.category))
+      .map((row) =>
+        mapPostRowToBlogPost(
+          row,
+          row.user_id ? profiles.get(row.user_id) : null,
+          reactions.get(row.id) ?? null,
+          saved.has(row.id)
+        )
       )
-    )
   } catch (err) {
     console.error("[fetchPosts]", err)
     return []
@@ -202,11 +219,16 @@ export async function insertPost(input: {
     input.content.trim().slice(0, 150) +
     (input.content.length > 150 ? "..." : "")
 
+  const categoryId = resolveCategoryId(input.category)
+  if (!categoryId) {
+    return { post: null, error: "Invalid category." }
+  }
+
   const row = {
     title: input.title.trim(),
     content: input.content.trim(),
     excerpt,
-    category: input.category,
+    category: categoryId,
     author_name: profile.displayName,
     author_avatar: profile.avatarUrl ?? "",
     cover_image: "",

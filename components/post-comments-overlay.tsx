@@ -8,6 +8,7 @@ import { PostIsland } from "@/components/post-island"
 import { PostCommentsPanel } from "@/components/post-comments-panel"
 import { fetchPostByIdAction } from "@/app/actions/posts"
 import { togglePostReactionAction } from "@/app/actions/reactions"
+import { toggleSavedPostAction } from "@/app/actions/saved-posts"
 import type { PostReactionKind } from "@/lib/post-reactions"
 import {
   computeOptimisticReaction,
@@ -190,7 +191,26 @@ export function PostCommentsOverlay({
       onOpenAuth("signin")
       return
     }
-    syncPost({ ...islandPost, isBookmarked: !islandPost.isBookmarked })
+
+    const previous = islandPost.isBookmarked
+    const optimistic = !previous
+    syncPost({ ...islandPost, isBookmarked: optimistic })
+
+    void (async () => {
+      try {
+        const result = await toggleSavedPostAction({ postId: islandPost.id })
+        if (!result.success) {
+          syncPost({ ...islandPost, isBookmarked: previous })
+          toast.error(result.error)
+          return
+        }
+        syncPost({ ...islandPost, isBookmarked: result.saved })
+        toast.success(result.saved ? "Post saved to Library" : "Removed from Library")
+      } catch {
+        syncPost({ ...islandPost, isBookmarked: previous })
+        toast.error("Could not update saved post.")
+      }
+    })()
   }
 
   if (!isOpen || !post || !islandPost) return null
@@ -211,10 +231,10 @@ export function PostCommentsOverlay({
       </div>
 
       <div
-        className="fixed inset-0 z-[110] flex items-center justify-center overflow-hidden p-4 md:justify-center md:pr-[min(420px,42vw)] md:pl-8"
+        className="fixed inset-0 z-[110] hidden items-center justify-center overflow-hidden p-4 md:flex md:justify-center md:pr-[min(420px,42vw)] md:pl-8"
         role="dialog"
         aria-modal
-        aria-label="Post and comments"
+        aria-label="Post preview"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose()
         }}

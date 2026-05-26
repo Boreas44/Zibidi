@@ -36,7 +36,7 @@ export function PostCommentsPanelContent({
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       <div
         className={cn(
-          "relative shrink-0 border-b border-border px-4 pb-4 pt-3 md:px-6",
+          "relative shrink-0 border-b border-border px-4 pb-4 pt-2 md:px-6 md:pt-3",
           headerClassName
         )}
       >
@@ -46,7 +46,7 @@ export function PostCommentsPanelContent({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-3 top-3 h-8 w-8 shrink-0 rounded-full md:right-5 md:top-4"
+              className="absolute right-2 top-2 h-10 w-10 shrink-0 rounded-full md:right-5 md:top-4 md:h-8 md:w-8"
               onClick={onClose}
               aria-label="Close comments"
             >
@@ -59,7 +59,7 @@ export function PostCommentsPanelContent({
             size="sm"
             className="mt-0.5 shrink-0"
           />
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <div className={cn("flex min-w-0 flex-1 flex-col gap-0.5", onClose && "pr-10")}>
             <Nickname
               name={post.author.name}
               className="text-[13px] font-semibold leading-tight text-foreground"
@@ -77,14 +77,15 @@ export function PostCommentsPanelContent({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4 md:px-6">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 pb-0 pt-3 md:px-6 md:py-4">
         <PostThreadSection
           post={post}
           user={user}
           active={active}
           onOpenAuth={onOpenAuth}
           onCountChange={onThreadCountChange}
-          className="min-h-0 flex-1 overflow-y-auto"
+          stickyComposer
+          className="min-h-0 flex-1"
         />
       </div>
     </div>

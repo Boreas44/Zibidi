@@ -13,6 +13,11 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  DEFAULT_CATEGORY_ID,
+  PUBLICATION_CATEGORIES,
+  type CategoryId,
+} from "@/lib/categories"
 
 interface CreatePostPanelProps {
   isOpen: boolean
@@ -25,15 +30,6 @@ interface CreatePostPanelProps {
   isSubmitting?: boolean
 }
 
-const categories = [
-  "Technology",
-  "Design",
-  "Development",
-  "Lifestyle",
-  "Business",
-  "Travel",
-]
-
 export function CreatePostPanel({
   isOpen,
   onClose,
@@ -43,7 +39,7 @@ export function CreatePostPanel({
   const isMobile = useIsMobile()
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [category, setCategory] = useState(categories[0])
+  const [category, setCategory] = useState<CategoryId>(DEFAULT_CATEGORY_ID)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +47,7 @@ export function CreatePostPanel({
     await onSubmit({ title, content, category })
     setTitle("")
     setContent("")
-    setCategory(categories[0])
+    setCategory(DEFAULT_CATEGORY_ID)
   }
 
   const isValid = title.trim().length > 0 && content.trim().length > 0
@@ -87,15 +83,21 @@ export function CreatePostPanel({
                 Category
               </label>
               <div className="flex flex-wrap gap-2">
-                {categories.map((cat) => (
+                {PUBLICATION_CATEGORIES.map((cat) => (
                   <Button
-                    key={cat}
+                    key={cat.id}
                     type="button"
-                    variant={category === cat ? "default" : "ios"}
+                    variant={category === cat.id ? "default" : "ios"}
                     size="sm"
-                    onClick={() => setCategory(cat)}
+                    onClick={() => setCategory(cat.id)}
+                    className={cat.flag ? "gap-1.5" : undefined}
                   >
-                    {cat}
+                    {cat.flag ? (
+                      <span className="text-base leading-none" aria-hidden>
+                        {cat.flag}
+                      </span>
+                    ) : null}
+                    <span>{cat.pillar}</span>
                   </Button>
                 ))}
               </div>

@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { togglePostReactionAction } from "@/app/actions/reactions"
+import { toggleSavedPostAction } from "@/app/actions/saved-posts"
 import { deletePostAction } from "@/app/actions/posts"
 import type { PostReactionKind } from "@/lib/post-reactions"
 import {
@@ -132,7 +133,26 @@ export function PostDetailPage({ initialPost, user }: PostDetailPageProps) {
       openAuth("signin")
       return
     }
-    setPost((prev) => ({ ...prev, isBookmarked: !prev.isBookmarked }))
+
+    const previous = post.isBookmarked
+    const optimistic = !previous
+    setPost((prev) => ({ ...prev, isBookmarked: optimistic }))
+
+    void (async () => {
+      try {
+        const result = await toggleSavedPostAction({ postId: post.id })
+        if (!result.success) {
+          setPost((prev) => ({ ...prev, isBookmarked: previous }))
+          toast.error(result.error)
+          return
+        }
+        setPost((prev) => ({ ...prev, isBookmarked: result.saved }))
+        toast.success(result.saved ? "Post saved to Library" : "Removed from Library")
+      } catch {
+        setPost((prev) => ({ ...prev, isBookmarked: previous }))
+        toast.error("Could not update saved post.")
+      }
+    })()
   }
 
   const handleDelete = async () => {

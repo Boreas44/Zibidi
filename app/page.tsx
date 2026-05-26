@@ -1,6 +1,6 @@
 import { fetchPosts } from "@/lib/posts"
 import { getSessionProfile } from "@/lib/auth/server"
-import { HomePage } from "@/components/home-page"
+import { HomePageClient } from "@/components/home-page-client"
 
 export default async function Page() {
   const [initialPosts, user] = await Promise.all([
@@ -8,5 +8,5 @@ export default async function Page() {
     getSessionProfile(),
   ])
 
-  return <HomePage initialPosts={initialPosts} user={user} />
+  return <HomePageClient initialPosts={initialPosts} user={user} />
 }

@@ -33,6 +33,8 @@ interface PostThreadSectionProps {
   active: boolean
   onOpenAuth: (mode?: "signin" | "signup") => void
   onCountChange?: (count: number) => void
+  /** Keeps the comment form fixed at the bottom (drawer / mobile). */
+  stickyComposer?: boolean
   className?: string
   id?: string
 }
@@ -43,6 +45,7 @@ export function PostThreadSection({
   active,
   onOpenAuth,
   onCountChange,
+  stickyComposer = false,
   className,
   id = "comments",
 }: PostThreadSectionProps) {
@@ -268,88 +271,117 @@ export function PostThreadSection({
     }
   }
 
+  const commentList = isLoading ? (
+    <div className="flex justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  ) : loadError ? (
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-6 text-center">
+      <p className="text-[15px] font-medium text-foreground">Could not load comments</p>
+      <p className="mt-2 text-[13px] text-muted-foreground">{loadError}</p>
+      <Button type="button" variant="outline" className="mt-4" onClick={() => void loadThread()}>
+        Try again
+      </Button>
+    </div>
+  ) : comments.length === 0 ? (
+    <div className="rounded-2xl border border-dashed border-border bg-ios-fill-secondary px-4 py-10 text-center">
+      <p className="text-[15px] font-medium text-foreground">No comments yet</p>
+      <p className="mt-1 text-[13px] text-muted-foreground">
+        Be the first to share your thoughts.
+      </p>
+    </div>
+  ) : (
+    <ul className="space-y-4">
+      {comments.map((comment) => (
+        <CommentThreadItem
+          key={comment.id}
+          comment={comment}
+          replies={repliesByComment[comment.id] ?? []}
+          newReplyIds={newReplyIds}
+          currentUserId={user?.id}
+          replyTarget={replyTarget}
+          replyDraft={replyDraft}
+          isSubmittingReply={isSubmittingReply}
+          deletingCommentId={deletingCommentId}
+          deletingReplyId={deletingReplyId}
+          onReplyTarget={(target) => {
+            setReplyTarget(target)
+            setReplyDraft("")
+          }}
+          onReplyDraftChange={setReplyDraft}
+          onSubmitReply={() => void handleSubmitReply()}
+          onCancelReply={() => {
+            setReplyTarget(null)
+            setReplyDraft("")
+          }}
+          onDeleteComment={(cid) => void handleDeleteComment(cid)}
+          onDeleteReply={(rid) => void handleDeleteReply(rid)}
+          onFlyInComplete={clearReplyFlyIn}
+        />
+      ))}
+    </ul>
+  )
+
+  const composerForm = (
+    <form
+      onSubmit={handleSubmitComment}
+      className={cn(
+        "space-y-3 border-t border-border bg-card",
+        stickyComposer ? "shrink-0 px-0 pt-3 safe-bottom" : "mt-6 pt-4"
+      )}
+    >
+      <Textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={
+          stickyComposer
+            ? (e) => {
+                requestAnimationFrame(() => {
+                  e.currentTarget.scrollIntoView({ block: "nearest", behavior: "smooth" })
+                })
+              }
+            : undefined
+        }
+        placeholder={user ? "Write a comment…" : "Sign in to write a comment"}
+        disabled={!user || isSubmitting || isLoading}
+        rows={stickyComposer ? 2 : 3}
+        maxLength={2000}
+        className={cn(
+          "resize-none rounded-2xl border-0 bg-ios-fill px-4 py-3 text-[17px] text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/40",
+          stickyComposer ? "min-h-[72px]" : "min-h-[88px]"
+        )}
+      />
+      <Button type="submit" className="w-full" disabled={!user || !draft.trim() || isSubmitting}>
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Posting…
+          </>
+        ) : (
+          <>
+            <Send className="h-4 w-4" />
+            Post comment
+          </>
+        )}
+      </Button>
+    </form>
+  )
+
+  if (stickyComposer) {
+    return (
+      <section id={id} className={cn("flex min-h-0 flex-1 flex-col", className)}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+          {commentList}
+        </div>
+        {composerForm}
+      </section>
+    )
+  }
+
   return (
     <section id={id} className={cn("flex flex-col", className)}>
-      <div className="flex-1">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : loadError ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-6 text-center">
-            <p className="text-[15px] font-medium text-foreground">Could not load comments</p>
-            <p className="mt-2 text-[13px] text-muted-foreground">{loadError}</p>
-            <Button type="button" variant="outline" className="mt-4" onClick={() => void loadThread()}>
-              Try again
-            </Button>
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-ios-fill-secondary px-4 py-10 text-center">
-            <p className="text-[15px] font-medium text-foreground">No comments yet</p>
-            <p className="mt-1 text-[13px] text-muted-foreground">
-              Be the first to share your thoughts.
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-4">
-            {comments.map((comment) => (
-              <CommentThreadItem
-                key={comment.id}
-                comment={comment}
-                replies={repliesByComment[comment.id] ?? []}
-                newReplyIds={newReplyIds}
-                currentUserId={user?.id}
-                replyTarget={replyTarget}
-                replyDraft={replyDraft}
-                isSubmittingReply={isSubmittingReply}
-                deletingCommentId={deletingCommentId}
-                deletingReplyId={deletingReplyId}
-                onReplyTarget={(target) => {
-                  setReplyTarget(target)
-                  setReplyDraft("")
-                }}
-                onReplyDraftChange={setReplyDraft}
-                onSubmitReply={() => void handleSubmitReply()}
-                onCancelReply={() => {
-                  setReplyTarget(null)
-                  setReplyDraft("")
-                }}
-                onDeleteComment={(cid) => void handleDeleteComment(cid)}
-                onDeleteReply={(rid) => void handleDeleteReply(rid)}
-                onFlyInComplete={clearReplyFlyIn}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <form
-        onSubmit={handleSubmitComment}
-        className="mt-6 space-y-3 border-t border-border pt-4"
-      >
-        <Textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={user ? "Write a comment…" : "Sign in to write a comment"}
-          disabled={!user || isSubmitting || isLoading}
-          rows={3}
-          maxLength={2000}
-          className="min-h-[88px] resize-none rounded-2xl border-0 bg-ios-fill px-4 py-3 text-[17px] text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/40"
-        />
-        <Button type="submit" className="w-full" disabled={!user || !draft.trim() || isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Posting…
-            </>
-          ) : (
-            <>
-              <Send className="h-4 w-4" />
-              Post comment
-            </>
-          )}
-        </Button>
-      </form>
+      <div className="flex-1">{commentList}</div>
+      {composerForm}
     </section>
   )
 }

@@ -15,16 +15,22 @@ import { AuthPanel } from "@/components/auth-panel"
 import { CategoryCards } from "@/components/category-cards"
 import { IosTabBar } from "@/components/ios/ios-tab-bar"
 import { togglePostReactionAction } from "@/app/actions/reactions"
+import { toggleSavedPostAction } from "@/app/actions/saved-posts"
 import { createPostAction, deletePostAction } from "@/app/actions/posts"
 import type { PostReactionKind } from "@/lib/post-reactions"
 import {
   computeOptimisticReaction,
   snapshotFromPost,
 } from "@/lib/reaction-optimistic"
+import {
+  getCategoryTagline,
+  getCategoryTitle,
+  postMatchesCategory,
+} from "@/lib/categories"
 import { TAB_META, type AppTab } from "@/lib/tabs"
 import type { AppProfile } from "@/lib/auth/server"
 
-interface HomePageProps {
+export interface HomePageProps {
   initialPosts: BlogPost[]
   user: AppProfile | null
 }
@@ -32,11 +38,15 @@ interface HomePageProps {
 function matchesSearch(post: BlogPost, query: string): boolean {
   if (!query) return true
   const q = query.toLowerCase()
+  const pillar = getCategoryTitle(post.category).toLowerCase()
+  const tagline = getCategoryTagline(post.category)?.toLowerCase() ?? ""
   return (
     post.title.toLowerCase().includes(q) ||
     post.excerpt.toLowerCase().includes(q) ||
     post.author.name.toLowerCase().includes(q) ||
-    post.category.toLowerCase().includes(q)
+    post.category.toLowerCase().includes(q) ||
+    pillar.includes(q) ||
+    tagline.includes(q)
   )
 }
 
@@ -143,9 +153,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
       selectedCategory &&
       (activeTab === "home" || activeTab === "explore")
     ) {
-      list = list.filter(
-        (p) => p.category.toLowerCase() === selectedCategory.toLowerCase()
-      )
+      list = list.filter((p) => postMatchesCategory(p.category, selectedCategory))
     }
 
     if (activeTab === "feed") {
@@ -156,9 +164,13 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   }, [posts, activeTab, searchQuery, selectedCategory])
 
   const meta = TAB_META[activeTab]
+  const filteredCategoryTagline =
+    selectedCategory && (activeTab === "home" || activeTab === "explore")
+      ? getCategoryTagline(selectedCategory)
+      : null
   const sectionTitle =
     selectedCategory && (activeTab === "home" || activeTab === "explore")
-      ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}`
+      ? getCategoryTitle(selectedCategory)
       : meta.title
 
   const applyPostReactionState = useCallback(
@@ -305,13 +317,58 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
       openAuth("signin")
       return
     }
+
+    const current = posts.find((p) => p.id === id)
+    if (!current) return
+
+    const previous = current.isBookmarked
+    const optimistic = !previous
+
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === id
-          ? { ...post, isBookmarked: !post.isBookmarked }
-          : post
+        post.id === id ? { ...post, isBookmarked: optimistic } : post
       )
     )
+    setCommentsPost((prev) =>
+      prev?.id === id ? { ...prev, isBookmarked: optimistic } : prev
+    )
+
+    void (async () => {
+      try {
+        const result = await toggleSavedPostAction({ postId: id })
+        if (!result.success) {
+          setPosts((prev) =>
+            prev.map((post) =>
+              post.id === id ? { ...post, isBookmarked: previous } : post
+            )
+          )
+          setCommentsPost((prev) =>
+            prev?.id === id ? { ...prev, isBookmarked: previous } : prev
+          )
+          toast.error(result.error)
+          return
+        }
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === id ? { ...post, isBookmarked: result.saved } : post
+          )
+        )
+        setCommentsPost((prev) =>
+          prev?.id === id ? { ...prev, isBookmarked: result.saved } : prev
+        )
+        toast.success(result.saved ? "Post saved to Library" : "Removed from Library")
+      } catch {
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === id ? { ...post, isBookmarked: previous } : post
+          )
+        )
+        setCommentsPost((prev) =>
+          prev?.id === id ? { ...prev, isBookmarked: previous } : prev
+        )
+        toast.error("Could not update saved post.")
+      }
+    })()
   }
 
   const handleDeletePost = async (postId: string) => {
@@ -422,6 +479,11 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
                     <h2 className="text-[22px] font-bold tracking-tight text-foreground">
                       {sectionTitle}
                     </h2>
+                    {filteredCategoryTagline ? (
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">
+                        {filteredCategoryTagline}
+                      </p>
+                    ) : null}
                     <p className="mt-1 text-[13px] text-muted-foreground">
                       {tabPosts.length} posts
                       {activeTab === "feed" ? " in your feed" : ""}

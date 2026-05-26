@@ -10,6 +10,8 @@ import {
 import type { BlogPost } from "@/components/blog-card"
 import { UserAvatar } from "@/components/user-avatar"
 import type { PostReactionKind } from "@/lib/post-reactions"
+import { CategoryBadge } from "@/components/category-badge"
+import { getCategoryFlag } from "@/lib/categories"
 import { cn } from "@/lib/utils"
 
 interface PostIslandProps {
@@ -30,7 +32,6 @@ export function PostIsland({
   className,
 }: PostIslandProps) {
   const body = post.content?.trim() || post.excerpt
-
   return (
     <div
       className={cn(
@@ -44,15 +45,19 @@ export function PostIsland({
         <div className="relative h-36 shrink-0 overflow-hidden">
           <img src={post.coverImage} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
-          <span className="absolute left-4 top-4 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-md">
-            {post.category}
-          </span>
+          <CategoryBadge
+            category={post.category}
+            variant="pill"
+            showName={false}
+            className="absolute left-4 top-4"
+          />
         </div>
       ) : (
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-3">
-          <span className="rounded-full bg-ios-fill px-2.5 py-1 text-[11px] font-medium text-foreground/80">
-            {post.category}
-          </span>
+          <CategoryBadge
+            category={post.category}
+            showName={!getCategoryFlag(post.category)}
+          />
           {onOpenFullPost ? (
             <button
               type="button"
