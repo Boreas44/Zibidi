@@ -14,7 +14,13 @@ import { ProfilePanel } from "@/components/profile-panel"
 import { AuthPanel } from "@/components/auth-panel"
 import { CategoryCards } from "@/components/category-cards"
 import { IosTabBar } from "@/components/ios/ios-tab-bar"
+import { togglePostReactionAction } from "@/app/actions/reactions"
 import { createPostAction, deletePostAction } from "@/app/actions/posts"
+import type { PostReactionKind } from "@/lib/post-reactions"
+import {
+  computeOptimisticReaction,
+  snapshotFromPost,
+} from "@/lib/reaction-optimistic"
 import { TAB_META, type AppTab } from "@/lib/tabs"
 import type { AppProfile } from "@/lib/auth/server"
 
@@ -46,6 +52,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [commentsPost, setCommentsPost] = useState<BlogPost | null>(null)
+  const reactionRequestSeq = useRef<Record<string, number>>({})
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
@@ -154,18 +161,116 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
       ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)}`
       : meta.title
 
-  const handleLike = (id: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
+  const applyPostReactionState = useCallback(
+    (
+      postId: string,
+      state: {
+        likes: number
+        dislikes: number
+        userReaction: PostReactionKind | null
+      }
+    ) => {
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likes: state.likes,
+                dislikes: state.dislikes,
+                isLiked: state.userReaction === "like",
+                isDisliked: state.userReaction === "dislike",
+              }
+            : post
+        )
       )
-    )
+    },
+    []
+  )
+
+  const handleReaction = (postId: string, reaction: PostReactionKind) => {
+    if (!user) {
+      toast.error("Sign in to react to posts")
+      openAuth("signin")
+      return
+    }
+
+    let rollback: ReturnType<typeof snapshotFromPost> | null = null
+
+    setPosts((prev) => {
+      const post = prev.find((p) => p.id === postId)
+      if (!post) return prev
+
+      rollback = snapshotFromPost(post)
+      const next = computeOptimisticReaction(post, reaction)
+      return prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              likes: next.likes,
+              dislikes: next.dislikes,
+              isLiked: next.userReaction === "like",
+              isDisliked: next.userReaction === "dislike",
+            }
+          : p
+      )
+    })
+
+    if (!rollback) return
+
+    const seq = (reactionRequestSeq.current[postId] ?? 0) + 1
+    reactionRequestSeq.current[postId] = seq
+
+    void (async () => {
+      try {
+        const result = await togglePostReactionAction({ postId, reaction })
+        if (reactionRequestSeq.current[postId] !== seq) return
+
+        if (result.success) {
+          applyPostReactionState(postId, result.state)
+        } else {
+          const saved = rollback
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === postId
+                ? {
+                    ...p,
+                    likes: saved.likes,
+                    dislikes: saved.dislikes,
+                    isLiked: saved.isLiked,
+                    isDisliked: saved.isDisliked,
+                  }
+                : p
+            )
+          )
+          toast.error(result.error)
+        }
+      } catch {
+        if (reactionRequestSeq.current[postId] !== seq) return
+        const saved = rollback
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  likes: saved.likes,
+                  dislikes: saved.dislikes,
+                  isLiked: saved.isLiked,
+                  isDisliked: saved.isDisliked,
+                }
+              : p
+          )
+        )
+        toast.error("Could not update reaction.")
+      }
+    })()
+  }
+
+  const handleLike = (id: string) => {
+    handleReaction(id, "like")
+  }
+
+  const handleDislike = (id: string) => {
+    handleReaction(id, "dislike")
   }
 
   const handleOpenComments = (post: BlogPost) => {
@@ -335,6 +440,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
                         post={post}
                         isOwner={!!user?.id && post.userId === user.id}
                         onLike={handleLike}
+                        onDislike={handleDislike}
                         onComment={handleOpenComments}
                         onBookmark={handleBookmark}
                         onDelete={handleDeletePost}

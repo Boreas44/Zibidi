@@ -74,6 +74,7 @@ export interface Database {
           cover_image: string
           read_time: string
           likes_count: number
+          dislikes_count: number
           comments_count: number
           user_id: string | null
           created_at: string
@@ -89,6 +90,7 @@ export interface Database {
           cover_image?: string
           read_time: string
           likes_count?: number
+          dislikes_count?: number
           comments_count?: number
           user_id?: string | null
           created_at?: string
@@ -104,8 +106,31 @@ export interface Database {
           cover_image?: string
           read_time?: string
           likes_count?: number
+          dislikes_count?: number
           comments_count?: number
           user_id?: string | null
+        }
+      }
+      post_reactions: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          reaction: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          reaction: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          reaction?: string
         }
       }
     }
@@ -113,5 +138,6 @@ export interface Database {
 }
 
 export type PostRow = Database["public"]["Tables"]["posts"]["Row"]
+export type PostReactionRow = Database["public"]["Tables"]["post_reactions"]["Row"]
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]

@@ -1,6 +1,13 @@
 "use client"
 
-import { Heart, MessageCircle, Bookmark, MoreHorizontal, Trash2 } from "lucide-react"
+import {
+  Heart,
+  ThumbsDown,
+  MessageCircle,
+  Bookmark,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react"
 import { useState } from "react"
 import { UserAvatar } from "@/components/user-avatar"
 import {
@@ -33,9 +40,11 @@ export interface BlogPost {
   category: string
   readTime: string
   likes: number
+  dislikes: number
   comments: number
   createdAt: string
   isLiked?: boolean
+  isDisliked?: boolean
   isBookmarked?: boolean
 }
 
@@ -43,6 +52,7 @@ interface BlogCardProps {
   post: BlogPost
   isOwner?: boolean
   onLike?: (id: string) => void
+  onDislike?: (id: string) => void
   onComment?: (post: BlogPost) => void
   onBookmark?: (id: string) => void
   onDelete?: (id: string) => void
@@ -53,6 +63,7 @@ export function BlogCard({
   post,
   isOwner = false,
   onLike,
+  onDislike,
   onComment,
   onBookmark,
   onDelete,
@@ -178,15 +189,44 @@ export function BlogCard({
         <div className="flex items-center justify-between border-t border-border pt-3">
           <div className="flex items-center gap-4">
             <button
-              onClick={(e) => { e.stopPropagation(); onLike?.(post.id) }}
-              className={`flex items-center gap-1.5 text-[12px] transition-smooth ${
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onLike?.(post.id)
+              }}
+              className={`flex items-center gap-1.5 text-[12px] transition-smooth active:scale-95 ${
                 post.isLiked
                   ? "text-primary"
                   : "text-muted-foreground hover:text-primary"
               }`}
+              aria-pressed={post.isLiked}
+              aria-label={post.isLiked ? "Unlike post" : "Like post"}
             >
               <Heart className={`h-3.5 w-3.5 ${post.isLiked ? "fill-primary" : ""}`} />
               <span>{post.likes}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onDislike?.(post.id)
+              }}
+              className={`flex items-center gap-1.5 text-[12px] transition-smooth active:scale-95 ${
+                post.isDisliked
+                  ? "text-dislike"
+                  : "text-muted-foreground hover:text-dislike"
+              }`}
+              aria-pressed={post.isDisliked}
+              aria-label={post.isDisliked ? "Remove dislike" : "Dislike post"}
+            >
+              <ThumbsDown
+                className={`h-3.5 w-3.5 stroke-[2] ${
+                  post.isDisliked
+                    ? "fill-dislike stroke-black"
+                    : "fill-none stroke-current"
+                }`}
+              />
+              <span>{post.dislikes}</span>
             </button>
             <button
               type="button"

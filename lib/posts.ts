@@ -6,12 +6,17 @@ import {
   type ProfileAuthorSnapshot,
 } from "@/lib/auth/resolve-author"
 import { getSessionProfile } from "@/lib/auth/server"
+import {
+  fetchUserReactionsByPostIds,
+  type PostReactionKind,
+} from "@/lib/post-reactions"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 
 export function mapPostRowToBlogPost(
   row: PostRow,
-  profile?: ProfileAuthorSnapshot | null
+  profile?: ProfileAuthorSnapshot | null,
+  userReaction?: PostReactionKind | null
 ): BlogPost {
   const author = resolveAuthorFromProfile(row.user_id, profile ?? undefined, {
     name: row.author_name,
@@ -28,13 +33,15 @@ export function mapPostRowToBlogPost(
     category: row.category,
     readTime: row.read_time,
     likes: row.likes_count,
+    dislikes: row.dislikes_count ?? 0,
     comments: row.comments_count,
     createdAt: new Date(row.created_at).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     }),
-    isLiked: false,
+    isLiked: userReaction === "like",
+    isDisliked: userReaction === "dislike",
     isBookmarked: false,
   }
 }
@@ -62,13 +69,23 @@ export async function fetchPosts(): Promise<BlogPost[]> {
     }
 
     const rows = data ?? []
+    const postIds = rows.map((r) => r.id)
     const profiles = await fetchProfileAuthorsByUserIds(
       supabase,
       rows.map((r) => r.user_id).filter((id): id is string => Boolean(id))
     )
 
+    const session = await getSessionProfile()
+    const reactions = session
+      ? await fetchUserReactionsByPostIds(session.id, postIds)
+      : new Map<string, PostReactionKind>()
+
     return rows.map((row) =>
-      mapPostRowToBlogPost(row, row.user_id ? profiles.get(row.user_id) : null)
+      mapPostRowToBlogPost(
+        row,
+        row.user_id ? profiles.get(row.user_id) : null,
+        reactions.get(row.id) ?? null
+      )
     )
   } catch (err) {
     console.error("[fetchPosts]", err)
@@ -152,6 +169,7 @@ export async function insertPost(input: {
     cover_image: "",
     read_time: buildReadTime(input.content),
     likes_count: 0,
+    dislikes_count: 0,
     comments_count: 0,
     user_id: profile.id,
   }
