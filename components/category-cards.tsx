@@ -49,7 +49,6 @@ export function CategoryCards({ onCategorySelect, selectedCategory }: CategoryCa
               <video
                 ref={(el) => { videoRefs.current[category.id] = el }}
                 src={category.video}
-                poster={category.image}
                 muted
                 playsInline
                 loop

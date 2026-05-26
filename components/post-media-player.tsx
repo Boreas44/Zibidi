@@ -101,9 +101,8 @@ export function PostMediaThumbnail({
   const coverUrl = getMediaCoverUrl(media)
   const isEmbed = media.type === "youtube" || media.type === "instagram"
 
-  // Bazı embed'ler (özellikle Instagram) küçük thumbnail döndürmediği için,
-  // kullanıcı hover edince gerçek embed'i gösteriyoruz.
-  if (media.type === "instagram" && isHovered) {
+  // Touch cihazlarda hover olmadığı için embed medyayı doğrudan gösteriyoruz.
+  if (media.type === "instagram") {
     return (
       <div className={cn("relative h-full w-full bg-ios-fill-secondary", className)}>
         <iframe
@@ -111,13 +110,13 @@ export function PostMediaThumbnail({
           title={title || "Instagram post"}
           allowFullScreen
           scrolling="no"
-          className={cn("w-full border-0")}
+          className={cn("h-full w-full border-0")}
         />
       </div>
     )
   }
 
-  if (media.type === "youtube" && isHovered) {
+  if (media.type === "youtube") {
     return (
       <div className={cn("relative h-full w-full bg-black", className)}>
         <iframe
@@ -125,7 +124,7 @@ export function PostMediaThumbnail({
           title={title || "YouTube video"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-          className={cn("w-full border-0", "aspect-video")}
+          className={cn("h-full w-full border-0")}
         />
       </div>
     )
