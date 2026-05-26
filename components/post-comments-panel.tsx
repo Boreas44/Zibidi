@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Loader2, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -45,37 +45,47 @@ export function PostCommentsPanel({
   const [comments, setComments] = useState<PostComment[]>([])
   const [draft, setDraft] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
+  const postId = post?.id
+  const onCountChangeRef = useRef(onCommentCountChange)
+  onCountChangeRef.current = onCommentCountChange
+
   const loadComments = useCallback(async () => {
-    if (!post) return
+    if (!postId) return
     setIsLoading(true)
+    setLoadError(null)
     try {
-      const result = await fetchCommentsAction(post.id)
+      const result = await fetchCommentsAction(postId)
       if (result.success) {
         setComments(result.data)
-        onCommentCountChange?.(post.id, result.data.length)
+        onCountChangeRef.current?.(postId, result.data.length)
       } else {
+        setLoadError(result.error)
         toast.error(result.error)
       }
     } catch {
-      toast.error("Could not load comments.")
+      const message = "Could not load comments."
+      setLoadError(message)
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }
-  }, [post, onCommentCountChange])
+  }, [postId])
 
   useEffect(() => {
-    if (isOpen && post) {
+    if (isOpen && postId) {
       setDraft("")
       void loadComments()
     }
     if (!isOpen) {
       setComments([])
       setDraft("")
+      setLoadError(null)
     }
-  }, [isOpen, post, loadComments])
+  }, [isOpen, postId, loadComments])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,11 +104,9 @@ export function PostCommentsPanel({
         content: draft,
       })
       if (result.success) {
-        setComments((prev) => {
-          const next = [...prev, result.data]
-          onCommentCountChange?.(post.id, next.length)
-          return next
-        })
+        const nextCount = comments.length + 1
+        setComments((prev) => [...prev, result.data])
+        onCountChangeRef.current?.(post.id, nextCount)
         setDraft("")
         toast.success("Comment posted")
       } else {
@@ -117,11 +125,9 @@ export function PostCommentsPanel({
     try {
       const result = await deleteCommentAction(commentId)
       if (result.success) {
-        setComments((prev) => {
-          const next = prev.filter((c) => c.id !== commentId)
-          onCommentCountChange?.(post.id, next.length)
-          return next
-        })
+        const nextCount = Math.max(0, comments.length - 1)
+        setComments((prev) => prev.filter((c) => c.id !== commentId))
+        onCountChangeRef.current?.(post.id, nextCount)
         toast.success("Comment deleted")
       } else {
         toast.error(result.error)
@@ -154,6 +160,23 @@ export function PostCommentsPanel({
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : loadError ? (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-6 text-center">
+                <p className="text-[15px] font-medium text-foreground">Could not load comments</p>
+                <p className="mt-2 text-[13px] text-muted-foreground">{loadError}</p>
+                <p className="mt-3 text-[12px] text-muted-foreground">
+                  Run <code className="rounded bg-ios-fill px-1">005_comments.sql</code> in Supabase if
+                  you have not yet.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => void loadComments()}
+                >
+                  Try again
+                </Button>
               </div>
             ) : comments.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-ios-fill-secondary px-4 py-10 text-center">
@@ -210,16 +233,15 @@ export function PostCommentsPanel({
           <DrawerFooter className="border-t border-border bg-card px-4 pb-6 pt-4 md:px-6">
             <form onSubmit={handleSubmit} className="w-full space-y-3">
               <Textarea
-                variant="ios"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 placeholder={
                   user ? "Write a comment…" : "Sign in to write a comment"
                 }
-                disabled={!user || isSubmitting}
+                disabled={!user || isSubmitting || isLoading}
                 rows={3}
                 maxLength={2000}
-                className="min-h-[88px] resize-none"
+                className="min-h-[88px] resize-none rounded-2xl border-0 bg-ios-fill px-4 py-3 text-[17px] text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/40"
               />
               <Button
                 type="submit"

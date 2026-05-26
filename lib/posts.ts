@@ -1,19 +1,29 @@
 import type { BlogPost } from "@/components/blog-card"
 import type { PostRow } from "@/lib/database.types"
+import {
+  fetchProfileAuthorsByUserIds,
+  resolveAuthorFromProfile,
+  type ProfileAuthorSnapshot,
+} from "@/lib/auth/resolve-author"
 import { getSessionProfile } from "@/lib/auth/server"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 
-export function mapPostRowToBlogPost(row: PostRow): BlogPost {
+export function mapPostRowToBlogPost(
+  row: PostRow,
+  profile?: ProfileAuthorSnapshot | null
+): BlogPost {
+  const author = resolveAuthorFromProfile(row.user_id, profile ?? undefined, {
+    name: row.author_name,
+    avatar: row.author_avatar || "",
+  })
+
   return {
     id: row.id,
     userId: row.user_id,
     title: row.title,
     excerpt: row.excerpt,
-    author: {
-      name: row.author_name,
-      avatar: row.author_avatar || "",
-    },
+    author,
     coverImage: row.cover_image || "",
     category: row.category,
     readTime: row.read_time,
@@ -51,7 +61,15 @@ export async function fetchPosts(): Promise<BlogPost[]> {
       return []
     }
 
-    return (data ?? []).map(mapPostRowToBlogPost)
+    const rows = data ?? []
+    const profiles = await fetchProfileAuthorsByUserIds(
+      supabase,
+      rows.map((r) => r.user_id).filter((id): id is string => Boolean(id))
+    )
+
+    return rows.map((row) =>
+      mapPostRowToBlogPost(row, row.user_id ? profiles.get(row.user_id) : null)
+    )
   } catch (err) {
     console.error("[fetchPosts]", err)
     return []
@@ -154,7 +172,13 @@ export async function insertPost(input: {
       return { post: null, error: error.message }
     }
 
-    return { post: mapPostRowToBlogPost(data), error: null }
+    return {
+      post: mapPostRowToBlogPost(data, {
+        display_name: profile.displayName,
+        avatar_url: profile.avatarUrl,
+      }),
+      error: null,
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create post"
     return { post: null, error: message }

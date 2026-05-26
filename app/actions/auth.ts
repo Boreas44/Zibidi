@@ -13,6 +13,13 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/env"
 import {
+  assertDisplayNameAvailable,
+  DISPLAY_NAME_TAKEN,
+  isDisplayNameConflictError,
+  normalizeDisplayName,
+  validateDisplayNameFormat,
+} from "@/lib/auth/display-name"
+import {
   isStrongPassword,
   PASSWORD_STRONG_ERROR,
 } from "@/lib/password-strength"
@@ -79,16 +86,25 @@ export async function startSignUpAction(input: {
 
   try {
     const email = normalizeEmail(input.email)
-    const displayName = input.displayName.trim()
+    const displayName = normalizeDisplayName(input.displayName)
 
     if (!email || !input.password || !displayName) {
       return { success: false, error: "All fields are required." }
+    }
+    const nameFormatError = validateDisplayNameFormat(displayName)
+    if (nameFormatError) {
+      return { success: false, error: nameFormatError }
     }
     if (!isStrongPassword(input.password)) {
       return { success: false, error: PASSWORD_STRONG_ERROR }
     }
 
     const supabase = await createClient()
+    const nameCheck = await assertDisplayNameAvailable(supabase, displayName)
+    if (!nameCheck.ok) {
+      return { success: false, error: nameCheck.error }
+    }
+
     const emailRedirectTo = await getAuthCallbackUrl()
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -126,7 +142,7 @@ export async function verifySignUpOtpAction(input: {
   try {
     const email = normalizeEmail(input.email)
     const token = normalizeEmailOtp(input.token)
-    const displayName = input.displayName.trim()
+    const displayName = normalizeDisplayName(input.displayName)
 
     if (!email) {
       return { success: false, error: "Email is required." }
@@ -140,11 +156,16 @@ export async function verifySignUpOtpAction(input: {
     if (!isStrongPassword(input.password)) {
       return { success: false, error: PASSWORD_STRONG_ERROR }
     }
-    if (!displayName) {
-      return { success: false, error: "Display name is required." }
+    const nameFormatError = validateDisplayNameFormat(displayName)
+    if (nameFormatError) {
+      return { success: false, error: nameFormatError }
     }
 
     const supabase = await createClient()
+    const nameCheck = await assertDisplayNameAvailable(supabase, displayName)
+    if (!nameCheck.ok) {
+      return { success: false, error: nameCheck.error }
+    }
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token,
@@ -173,13 +194,20 @@ export async function verifySignUpOtpAction(input: {
     } = await supabase.auth.getUser()
 
     if (user) {
-      await supabase
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
           display_name: displayName,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id)
+
+      if (profileError) {
+        if (isDisplayNameConflictError(profileError.message, profileError.code)) {
+          return { success: false, error: DISPLAY_NAME_TAKEN }
+        }
+        return { success: false, error: formatSupabaseAuthError(profileError.message) }
+      }
     }
 
     revalidatePath("/")
@@ -362,9 +390,10 @@ export async function updateProfileAction(input: {
   }
 
   try {
-    const displayName = input.displayName.trim()
-    if (!displayName) {
-      return { success: false, error: "Display name is required." }
+    const displayName = normalizeDisplayName(input.displayName)
+    const nameFormatError = validateDisplayNameFormat(displayName)
+    if (nameFormatError) {
+      return { success: false, error: nameFormatError }
     }
 
     const supabase = await createClient()
@@ -374,6 +403,15 @@ export async function updateProfileAction(input: {
 
     if (!user) {
       return { success: false, error: "You must be signed in." }
+    }
+
+    const nameCheck = await assertDisplayNameAvailable(
+      supabase,
+      displayName,
+      user.id
+    )
+    if (!nameCheck.ok) {
+      return { success: false, error: nameCheck.error }
     }
 
     const { error } = await supabase
@@ -386,6 +424,9 @@ export async function updateProfileAction(input: {
       .eq("id", user.id)
 
     if (error) {
+      if (isDisplayNameConflictError(error.message, error.code)) {
+        return { success: false, error: DISPLAY_NAME_TAKEN }
+      }
       return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 

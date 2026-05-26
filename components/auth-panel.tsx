@@ -25,6 +25,11 @@ import { useRouter } from "next/navigation"
 import { Mail } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_MIN_LENGTH,
+} from "@/lib/auth/display-name"
+import { PasswordInput } from "@/components/password-input"
 import { PasswordStrengthMeter } from "@/components/password-strength-meter"
 import { EMAIL_OTP_LENGTH, isCompleteEmailOtp } from "@/lib/auth/otp"
 import {
@@ -577,6 +582,8 @@ function AuthFields({
             className="mt-1"
             autoComplete="name"
             required
+            minLength={DISPLAY_NAME_MIN_LENGTH}
+            maxLength={DISPLAY_NAME_MAX_LENGTH}
           />
         </div>
       )}
@@ -606,10 +613,9 @@ function AuthFields({
         >
           {passwordLabel}
         </Label>
-        <Input
+        <PasswordInput
           id={`${idPrefix}-password`}
           variant="ios"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"

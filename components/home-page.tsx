@@ -48,6 +48,27 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   const [commentsPost, setCommentsPost] = useState<BlogPost | null>(null)
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPosts(initialPosts)
+  }, [initialPosts])
+
+  useEffect(() => {
+    if (!user) return
+    const author = {
+      name: user.displayName,
+      avatar: user.avatarUrl ?? "",
+    }
+    setPosts((prev) =>
+      prev.map((post) =>
+        post.userId === user.id ? { ...post, author } : post
+      )
+    )
+    setCommentsPost((prev) =>
+      prev?.userId === user.id ? { ...prev, author } : prev
+    )
+  }, [user?.id, user?.displayName, user?.avatarUrl])
+
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const handleTabChange = useCallback((tab: AppTab) => {
@@ -151,14 +172,14 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
     setCommentsPost(post)
   }
 
-  const handleCommentCountChange = (postId: string, count: number) => {
+  const handleCommentCountChange = useCallback((postId: string, count: number) => {
     setPosts((prev) =>
       prev.map((p) => (p.id === postId ? { ...p, comments: count } : p))
     )
     setCommentsPost((prev) =>
       prev?.id === postId ? { ...prev, comments: count } : prev
     )
-  }
+  }, [])
 
   const handleBookmark = (id: string) => {
     if (!user) {

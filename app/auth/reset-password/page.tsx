@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/password-input"
 import { Label } from "@/components/ui/label"
 import { PasswordStrengthMeter } from "@/components/password-strength-meter"
 import { updatePasswordAction } from "@/app/actions/auth"
@@ -63,10 +63,9 @@ export default function ResetPasswordPage() {
             <Label htmlFor="new-password" className="text-[13px] text-muted-foreground">
               New password
             </Label>
-            <Input
+            <PasswordInput
               id="new-password"
               variant="ios"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1"
@@ -80,10 +79,9 @@ export default function ResetPasswordPage() {
             <Label htmlFor="confirm-password" className="text-[13px] text-muted-foreground">
               Confirm password
             </Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
               variant="ios"
-              type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               className="mt-1"

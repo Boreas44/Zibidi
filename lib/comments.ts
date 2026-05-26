@@ -1,3 +1,8 @@
+import {
+  fetchProfileAuthorsByUserIds,
+  resolveAuthorFromProfile,
+  type ProfileAuthorSnapshot,
+} from "@/lib/auth/resolve-author"
 import { getSessionProfile } from "@/lib/auth/server"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
@@ -15,16 +20,28 @@ export interface PostComment {
   createdAt: string
 }
 
-function mapCommentRow(row: CommentRow): PostComment {
+function formatCommentsDbError(message: string) {
+  if (/comments|schema cache/i.test(message)) {
+    return "Comments table missing. Run supabase/migrations/005_comments.sql in Supabase."
+  }
+  return message
+}
+
+function mapCommentRow(
+  row: CommentRow,
+  profile?: ProfileAuthorSnapshot | null
+): PostComment {
+  const author = resolveAuthorFromProfile(row.user_id, profile ?? undefined, {
+    name: row.author_name,
+    avatar: row.author_avatar ?? "",
+  })
+
   return {
     id: row.id,
     postId: row.post_id,
     userId: row.user_id,
     content: row.content,
-    author: {
-      name: row.author_name,
-      avatar: row.author_avatar ?? "",
-    },
+    author,
     createdAt: new Date(row.created_at).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -51,11 +68,17 @@ export async function fetchCommentsForPost(
       .order("created_at", { ascending: true })
 
     if (error) {
-      return { comments: [], error: error.message }
+      return { comments: [], error: formatCommentsDbError(error.message) }
     }
 
+    const rows = (data ?? []) as CommentRow[]
+    const profiles = await fetchProfileAuthorsByUserIds(
+      supabase,
+      rows.map((r) => r.user_id)
+    )
+
     return {
-      comments: (data ?? []).map((row) => mapCommentRow(row as CommentRow)),
+      comments: rows.map((row) => mapCommentRow(row, profiles.get(row.user_id))),
       error: null,
     }
   } catch (err) {
@@ -100,10 +123,16 @@ export async function insertComment(input: {
       .single()
 
     if (error) {
-      return { comment: null, error: error.message }
+      return { comment: null, error: formatCommentsDbError(error.message) }
     }
 
-    return { comment: mapCommentRow(data as CommentRow), error: null }
+    return {
+      comment: mapCommentRow(data as CommentRow, {
+        display_name: profile.displayName,
+        avatar_url: profile.avatarUrl,
+      }),
+      error: null,
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to post comment."
     return { comment: null, error: message }

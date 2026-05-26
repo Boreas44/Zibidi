@@ -27,6 +27,10 @@ import { UserAvatar } from "@/components/user-avatar"
 import type { AppProfile } from "@/lib/auth/server"
 import { signOutAction, updateProfileAction } from "@/app/actions/auth"
 import { uploadAvatarAction, removeAvatarAction } from "@/app/actions/profile"
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_MIN_LENGTH,
+} from "@/lib/auth/display-name"
 import { hasAvatarUrl } from "@/lib/avatar"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -249,6 +253,9 @@ export function ProfilePanel({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="mt-1"
+                    minLength={DISPLAY_NAME_MIN_LENGTH}
+                    maxLength={DISPLAY_NAME_MAX_LENGTH}
+                    required
                   />
                 </div>
                 <div>
