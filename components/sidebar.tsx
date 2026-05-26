@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import type { AppTab } from "@/lib/tabs"
 import type { AppProfile } from "@/lib/auth/server"
+import { Nickname } from "@/components/nickname"
 import { UserAvatar } from "@/components/user-avatar"
 import {
   Search,
@@ -121,9 +122,16 @@ export function Sidebar({
               size="sm"
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-medium text-foreground">
-                {user ? user.displayName : "Sign in"}
-              </p>
+              {user ? (
+                <Nickname
+                  name={user.displayName}
+                  className="text-[13px] font-medium text-foreground"
+                />
+              ) : (
+                <p className="truncate text-[13px] font-medium text-foreground">
+                  Sign in
+                </p>
+              )}
               <p className="text-[11px] text-muted-foreground">
                 {user ? "View account" : "Create account"}
               </p>

@@ -3,22 +3,22 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 export const DISPLAY_NAME_MIN_LENGTH = 2
 export const DISPLAY_NAME_MAX_LENGTH = 32
 export const DISPLAY_NAME_TAKEN =
-  "This display name is already taken. Choose another."
+  "This nickname is already taken. Choose another."
 
 export function normalizeDisplayName(name: string): string {
-  return name.trim().replace(/\s+/g, " ")
+  return name.trim().replace(/^@+/, "").replace(/\s+/g, " ")
 }
 
 export function validateDisplayNameFormat(name: string): string | null {
   const normalized = normalizeDisplayName(name)
   if (normalized.length < DISPLAY_NAME_MIN_LENGTH) {
-    return `Display name must be at least ${DISPLAY_NAME_MIN_LENGTH} characters.`
+    return `Nickname must be at least ${DISPLAY_NAME_MIN_LENGTH} characters.`
   }
   if (normalized.length > DISPLAY_NAME_MAX_LENGTH) {
-    return `Display name must be at most ${DISPLAY_NAME_MAX_LENGTH} characters.`
+    return `Nickname must be at most ${DISPLAY_NAME_MAX_LENGTH} characters.`
   }
   if (!/^[\p{L}\p{N}_.\- ]+$/u.test(normalized)) {
-    return "Display name can only use letters, numbers, spaces, and _ . -"
+    return "Nickname can only use letters, numbers, spaces, and _ . -"
   }
   return null
 }

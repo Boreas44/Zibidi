@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/sidebar"
 import { SearchHeader } from "@/components/search-header"
 import { BlogCard, type BlogPost } from "@/components/blog-card"
 import { CreatePostPanel } from "@/components/create-post-panel"
-import { PostCommentsPanel } from "@/components/post-comments-panel"
+import { PostCommentsOverlay } from "@/components/post-comments-overlay"
 import { SettingsPanel } from "@/components/settings-panel"
 import { ProfilePanel } from "@/components/profile-panel"
 import { AuthPanel } from "@/components/auth-panel"
@@ -273,17 +273,30 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
     handleReaction(id, "dislike")
   }
 
-  const handleOpenComments = (post: BlogPost) => {
+  const openPost = useCallback(
+    (post: BlogPost) => {
+      router.push(`/post/${post.id}`)
+    },
+    [router]
+  )
+
+  const openPostComments = useCallback((post: BlogPost) => {
     setCommentsPost(post)
-  }
+  }, [])
 
   const handleCommentCountChange = useCallback((postId: string, count: number) => {
     setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, comments: count } : p))
+      prev.map((p) => (p.id === postId && p.comments !== count ? { ...p, comments: count } : p))
     )
-    setCommentsPost((prev) =>
-      prev?.id === postId ? { ...prev, comments: count } : prev
-    )
+    setCommentsPost((prev) => {
+      if (!prev || prev.id !== postId || prev.comments === count) return prev
+      return { ...prev, comments: count }
+    })
+  }, [])
+
+  const handleOverlayPostChange = useCallback((updated: BlogPost) => {
+    setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+    setCommentsPost(updated)
   }, [])
 
   const handleBookmark = (id: string) => {
@@ -439,9 +452,10 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
                         key={post.id}
                         post={post}
                         isOwner={!!user?.id && post.userId === user.id}
+                        onOpen={openPost}
                         onLike={handleLike}
                         onDislike={handleDislike}
-                        onComment={handleOpenComments}
+                        onComment={openPostComments}
                         onBookmark={handleBookmark}
                         onDelete={handleDeletePost}
                         isDeleting={deletingPostId === post.id}
@@ -486,12 +500,13 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
         isSubmitting={isSubmitting}
       />
 
-      <PostCommentsPanel
+      <PostCommentsOverlay
         post={commentsPost}
         isOpen={!!commentsPost}
         onClose={() => setCommentsPost(null)}
         user={user}
         onOpenAuth={openAuth}
+        onPostChange={handleOverlayPostChange}
         onCommentCountChange={handleCommentCountChange}
       />
 

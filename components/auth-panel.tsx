@@ -571,16 +571,16 @@ function AuthFields({
             htmlFor={`${idPrefix}-name`}
             className="text-[13px] text-muted-foreground"
           >
-            Display name
+            Nickname
           </Label>
           <Input
             id={`${idPrefix}-name`}
             variant="ios"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Nickname"
             className="mt-1"
-            autoComplete="name"
+            autoComplete="username"
             required
             minLength={DISPLAY_NAME_MIN_LENGTH}
             maxLength={DISPLAY_NAME_MAX_LENGTH}

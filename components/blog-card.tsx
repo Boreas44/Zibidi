@@ -31,6 +31,7 @@ export interface BlogPost {
   id: string
   userId?: string | null
   title: string
+  content?: string
   excerpt: string
   author: {
     name: string
@@ -51,6 +52,7 @@ export interface BlogPost {
 interface BlogCardProps {
   post: BlogPost
   isOwner?: boolean
+  onOpen?: (post: BlogPost) => void
   onLike?: (id: string) => void
   onDislike?: (id: string) => void
   onComment?: (post: BlogPost) => void
@@ -62,6 +64,7 @@ interface BlogCardProps {
 export function BlogCard({
   post,
   isOwner = false,
+  onOpen,
   onLike,
   onDislike,
   onComment,
@@ -77,6 +80,15 @@ export function BlogCard({
       className="group relative overflow-hidden rounded-2xl border border-border bg-card card-hover cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onOpen?.(post)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onOpen?.(post)
+        }
+      }}
+      role={onOpen ? "link" : undefined}
+      tabIndex={onOpen ? 0 : undefined}
     >
       {/* Cover Image */}
       <div className="relative aspect-[16/10] overflow-hidden bg-ios-fill-secondary">

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { deleteAllPosts, deletePost, insertPost } from "@/lib/posts"
+import { deleteAllPosts, deletePost, fetchPostById, insertPost } from "@/lib/posts"
 import type { BlogPost } from "@/components/blog-card"
 
 export type CreatePostResult =
@@ -15,6 +15,29 @@ export type DeleteAllPostsResult =
 export type DeletePostResult =
   | { success: true }
   | { success: false; error: string }
+
+export type FetchPostResult =
+  | { success: true; post: BlogPost }
+  | { success: false; error: string }
+
+export async function fetchPostByIdAction(postId: string): Promise<FetchPostResult> {
+  try {
+    if (!postId?.trim()) {
+      return { success: false, error: "Invalid post." }
+    }
+    const { post, error } = await fetchPostById(postId)
+    if (error) {
+      return { success: false, error }
+    }
+    if (!post) {
+      return { success: false, error: "Post not found." }
+    }
+    return { success: true, post }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Something went wrong."
+    return { success: false, error: message }
+  }
+}
 
 export async function deletePostAction(postId: string): Promise<DeletePostResult> {
   try {

@@ -12,6 +12,7 @@ import {
 } from "@/lib/post-reactions"
 import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
+import { formatDateTime } from "@/lib/format-datetime"
 
 export function mapPostRowToBlogPost(
   row: PostRow,
@@ -27,6 +28,7 @@ export function mapPostRowToBlogPost(
     id: row.id,
     userId: row.user_id,
     title: row.title,
+    content: row.content,
     excerpt: row.excerpt,
     author,
     coverImage: row.cover_image || "",
@@ -35,11 +37,7 @@ export function mapPostRowToBlogPost(
     likes: row.likes_count,
     dislikes: row.dislikes_count ?? 0,
     comments: row.comments_count,
-    createdAt: new Date(row.created_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
+    createdAt: formatDateTime(row.created_at),
     isLiked: userReaction === "like",
     isDisliked: userReaction === "dislike",
     isBookmarked: false,
@@ -49,6 +47,51 @@ export function mapPostRowToBlogPost(
 export function buildReadTime(content: string): string {
   const words = content.trim().split(/\s+/).filter(Boolean).length
   return `${Math.max(1, Math.ceil(words / 200))} min read`
+}
+
+export async function fetchPostById(
+  postId: string
+): Promise<{ post: BlogPost | null; error: string | null }> {
+  if (!isSupabaseConfigured()) {
+    return { post: null, error: "Supabase is not configured." }
+  }
+
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .maybeSingle()
+
+    if (error) {
+      return { post: null, error: error.message }
+    }
+    if (!data) {
+      return { post: null, error: null }
+    }
+
+    const profiles = data.user_id
+      ? await fetchProfileAuthorsByUserIds(supabase, [data.user_id])
+      : new Map()
+
+    const session = await getSessionProfile()
+    const reactions = session
+      ? await fetchUserReactionsByPostIds(session.id, [data.id])
+      : new Map<string, PostReactionKind>()
+
+    return {
+      post: mapPostRowToBlogPost(
+        data,
+        data.user_id ? profiles.get(data.user_id) : null,
+        reactions.get(data.id) ?? null
+      ),
+      error: null,
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load post."
+    return { post: null, error: message }
+  }
 }
 
 export async function fetchPosts(): Promise<BlogPost[]> {

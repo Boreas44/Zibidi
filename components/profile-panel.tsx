@@ -27,10 +27,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import type { AppProfile } from "@/lib/auth/server"
 import { signOutAction, updateProfileAction } from "@/app/actions/auth"
 import { uploadAvatarAction, removeAvatarAction } from "@/app/actions/profile"
-import {
-  DISPLAY_NAME_MAX_LENGTH,
-  DISPLAY_NAME_MIN_LENGTH,
-} from "@/lib/auth/display-name"
+import { Nickname } from "@/components/nickname"
+import { DISPLAY_NAME_MAX_LENGTH, DISPLAY_NAME_MIN_LENGTH } from "@/lib/auth/display-name"
 import { hasAvatarUrl } from "@/lib/avatar"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -245,7 +243,7 @@ export function ProfilePanel({
               <div className="w-full max-w-xs space-y-3 px-4">
                 <div>
                   <Label htmlFor="profile-name" className="text-[13px] text-secondary-foreground">
-                    Display name
+                    Nickname
                   </Label>
                   <Input
                     id="profile-name"
@@ -253,6 +251,7 @@ export function ProfilePanel({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     className="mt-1"
+                    placeholder="Nickname"
                     minLength={DISPLAY_NAME_MIN_LENGTH}
                     maxLength={DISPLAY_NAME_MAX_LENGTH}
                     required
@@ -273,7 +272,11 @@ export function ProfilePanel({
               </div>
             ) : (
               <>
-                <h3 className="text-[22px] font-bold text-foreground">{user.displayName}</h3>
+                <Nickname
+                  as="h3"
+                  name={user.displayName}
+                  className="text-[22px] font-bold text-foreground"
+                />
                 <p className="mt-2 max-w-xs text-center text-[15px] leading-relaxed text-secondary-foreground">
                   {user.bio || "No bio yet"}
                 </p>
