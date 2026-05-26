@@ -26,6 +26,7 @@ Tarayıcı: [http://localhost:3000](http://localhost:3000)
    - `supabase/migrations/001_posts.sql`
    - `supabase/migrations/003_auth_profiles.sql`
 3. **Authentication → URL Configuration**: Site URL `http://localhost:3000`, Redirect `http://localhost:3000/auth/callback`
+4. SQL migrations in order: `001_posts.sql`, `003_auth_profiles.sql`, `004_avatars_storage.sql` (optional), `005_comments.sql`
 4. İsteğe bağlı: Email provider’da “Confirm email” kapatabilirsin (geliştirme için).
 5. `npm run dev` yeniden başlat.
 

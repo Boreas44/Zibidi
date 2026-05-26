@@ -1,6 +1,51 @@
-<!-- Supabase → Authentication → Email Templates → Magic Link → Body -->
-<!-- Sadece OTP testi: link YOK. Çalışınca magic-link-otp.html ile değiştir. -->
-<h2 style="font-family:sans-serif;color:#111;">Zibidi doğrulama kodu</h2>
-<p style="font-family:sans-serif;color:#444;">Uygulamaya bu kodu gir:</p>
-<p style="font-family:monospace;font-size:32px;font-weight:bold;letter-spacing:6px;color:#111;">{{ .Token }}</p>
-<p style="font-family:sans-serif;font-size:13px;color:#888;">Bu kod kısa süre geçerlidir. Kimseyle paylaşma.</p>
+<!--
+  Supabase → Authentication → Email Templates → Magic Link → Body
+  OTP test: per-digit cells (matches app Verify email UI). No links.
+  Requires 6-digit {{ .Token }} — set Email OTP length to 6 in Supabase.
+-->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#000000;">
+  <tr>
+    <td align="center" style="padding:32px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+      <p style="margin:0 0 8px;font-size:20px;font-weight:600;color:#ffffff;">Your Zibidi verification code</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#8e8e93;">Enter this code in the app</p>
+
+      <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
+        <tr>
+          <td style="padding:0 5px 0 0;">
+            <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 0) }}</span>
+              </td>
+              <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 1) }}</span>
+              </td>
+              <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 2) }}</span>
+              </td>
+            </tr></table>
+          </td>
+          <td style="width:20px;text-align:center;vertical-align:middle;font-size:24px;font-weight:300;line-height:1;color:rgba(255,255,255,0.45);padding:0 4px;">·</td>
+          <td style="padding:0 0 0 5px;">
+            <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 3) }}</span>
+              </td>
+              <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 4) }}</span>
+              </td>
+              <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+              <td style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                <span style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 5) }}</span>
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:20px 0 0;font-size:13px;color:#636366;">This code expires soon. Do not share it with anyone.</p>
+    </td>
+  </tr>
+</table>

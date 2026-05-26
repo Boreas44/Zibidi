@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
+import {
+  EMAIL_OTP_LENGTH,
+  isCompleteEmailOtp,
+  normalizeEmailOtp,
+} from "@/lib/auth/otp"
 import { getAuthCallbackUrl } from "@/lib/auth/site-url"
 import {
   getSupabaseConfigError,
@@ -20,16 +25,31 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
 }
 
-function normalizeOtp(token: string) {
-  return token.replace(/\D/g, "").slice(0, 6)
-}
-
 function supabaseMisconfigResult(): AuthResult | null {
   const configError = getSupabaseConfigError()
   if (configError) {
     return { success: false, error: configError }
   }
   return null
+}
+
+/** Map Supabase Auth API errors to clearer copy. */
+function formatSupabaseAuthError(message: string): string {
+  const lower = message.toLowerCase()
+  if (lower.includes("email rate limit")) {
+    return (
+      "Too many auth emails sent for this project. Supabase’s built-in mail allows only a few per hour. " +
+      "Wait ~1 hour, or add custom SMTP in Supabase (see supabase/MAILERSEND_SMTP.md)."
+    )
+  }
+  if (
+    lower.includes("rate limit") ||
+    lower.includes("once every") ||
+    lower.includes("security purposes")
+  ) {
+    return "Please wait a minute before requesting another email or code."
+  }
+  return message
 }
 
 /** Supabase client throws when the API URL returns HTML (wrong env). */
@@ -48,7 +68,7 @@ function formatAuthError(err: unknown, fallback: string): string {
   return message || fallback
 }
 
-/** Kayıt: e-postaya 6 haneli kod gönderir (Magic Link şablonunda yalnızca {{ .Token }}). */
+/** Sign-up: send 6-digit OTP (Magic Link template must include {{ .Token }} only). */
 export async function startSignUpAction(input: {
   email: string
   password: string
@@ -80,20 +100,20 @@ export async function startSignUpAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     return {
       success: true,
       requiresOtp: true,
-      message: "We sent a 6-digit code to your email. Enter it below.",
+      message: `We sent a ${EMAIL_OTP_LENGTH}-digit code to your email. Enter it below.`,
     }
   } catch (err) {
     return { success: false, error: formatAuthError(err, "Sign up failed.") }
   }
 }
 
-/** Kayıt: 6 haneli kodu doğrula ve şifreyi ayarla. */
+/** Sign-up: verify OTP and set password. */
 export async function verifySignUpOtpAction(input: {
   email: string
   token: string
@@ -105,14 +125,17 @@ export async function verifySignUpOtpAction(input: {
 
   try {
     const email = normalizeEmail(input.email)
-    const token = normalizeOtp(input.token)
+    const token = normalizeEmailOtp(input.token)
     const displayName = input.displayName.trim()
 
     if (!email) {
       return { success: false, error: "Email is required." }
     }
-    if (token.length !== 6) {
-      return { success: false, error: "Enter the full 6-digit code." }
+    if (!isCompleteEmailOtp(input.token)) {
+      return {
+        success: false,
+        error: `Enter the full ${EMAIL_OTP_LENGTH}-digit code.`,
+      }
     }
     if (!isStrongPassword(input.password)) {
       return { success: false, error: PASSWORD_STRONG_ERROR }
@@ -129,7 +152,7 @@ export async function verifySignUpOtpAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     if (!data.session) {
@@ -166,7 +189,7 @@ export async function verifySignUpOtpAction(input: {
   }
 }
 
-/** Kayıt: doğrulama kodunu yeniden gönder. */
+/** Sign-up: resend verification OTP. */
 export async function resendSignUpOtpAction(input: {
   email: string
   displayName?: string
@@ -193,7 +216,7 @@ export async function resendSignUpOtpAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     return { success: true, message: "A new code was sent to your email." }
@@ -202,7 +225,7 @@ export async function resendSignUpOtpAction(input: {
   }
 }
 
-/** Şifre sıfırlama: e-postaya reset linki gönderir. */
+/** Password reset: send reset link by email. */
 export async function requestPasswordResetAction(input: {
   email: string
 }): Promise<AuthResult> {
@@ -223,7 +246,7 @@ export async function requestPasswordResetAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     return {
@@ -238,7 +261,7 @@ export async function requestPasswordResetAction(input: {
   }
 }
 
-/** E-posta linkinden geldikten sonra yeni şifre kaydet. */
+/** After email link: save new password. */
 export async function updatePasswordAction(input: {
   password: string
 }): Promise<AuthResult> {
@@ -268,7 +291,7 @@ export async function updatePasswordAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     revalidatePath("/")
@@ -301,7 +324,7 @@ export async function signInAction(input: {
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     revalidatePath("/")
@@ -320,7 +343,7 @@ export async function signOutAction(): Promise<AuthResult> {
     const supabase = await createClient()
     const { error } = await supabase.auth.signOut()
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
     revalidatePath("/")
     return { success: true }
@@ -363,7 +386,7 @@ export async function updateProfileAction(input: {
       .eq("id", user.id)
 
     if (error) {
-      return { success: false, error: error.message }
+      return { success: false, error: formatSupabaseAuthError(error.message) }
     }
 
     revalidatePath("/")

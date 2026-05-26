@@ -26,6 +26,7 @@ import { Mail } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { PasswordStrengthMeter } from "@/components/password-strength-meter"
+import { EMAIL_OTP_LENGTH, isCompleteEmailOtp } from "@/lib/auth/otp"
 import {
   isStrongPassword,
   PASSWORD_STRONG_ERROR,
@@ -132,8 +133,8 @@ export function AuthPanel({
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (otp.length !== 6) {
-      toast.error("Enter the 6-digit code")
+    if (!isCompleteEmailOtp(otp)) {
+      toast.error(`Enter the ${EMAIL_OTP_LENGTH}-digit code`)
       return
     }
     if (!isStrongPassword(password)) {
@@ -220,7 +221,7 @@ export function AuthPanel({
   const headerCopy = {
     otp: {
       title: "Verify your email",
-      description: `We sent a 6-digit code to ${email}`,
+      description: `We sent a ${EMAIL_OTP_LENGTH}-digit code to ${email}`,
     },
     forgot: {
       title: "Reset password",
@@ -447,7 +448,7 @@ export function AuthPanel({
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading || otp.length !== 6}
+                    disabled={isLoading || !isCompleteEmailOtp(otp)}
                   >
                     {isLoading ? "Verifying…" : "Verify & create account"}
                   </Button>

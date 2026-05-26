@@ -5,6 +5,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+import { EMAIL_OTP_LENGTH, emailOtpLengthLabel } from "@/lib/auth/otp"
 import { cn } from "@/lib/utils"
 
 const slotClassName = cn(
@@ -27,21 +28,30 @@ interface OtpCodeInputProps {
   disabled?: boolean
 }
 
+function OtpSlotGroup({ startIndex }: { startIndex: number }) {
+  const count = EMAIL_OTP_LENGTH === 8 ? 4 : 3
+  return (
+    <InputOTPGroup className="gap-2.5 sm:gap-3">
+      {Array.from({ length: count }, (_, i) => (
+        <InputOTPSlot key={startIndex + i} index={startIndex + i} className={slotClassName} />
+      ))}
+    </InputOTPGroup>
+  )
+}
+
 export function OtpCodeInput({ value, onChange, disabled }: OtpCodeInputProps) {
+  const label = emailOtpLengthLabel()
+
   return (
     <div className="flex flex-col items-center gap-4">
       <InputOTP
-        maxLength={6}
+        maxLength={EMAIL_OTP_LENGTH}
         value={value}
         onChange={onChange}
         disabled={disabled}
         containerClassName="justify-center gap-3 sm:gap-3.5"
       >
-        <InputOTPGroup className="gap-2.5 sm:gap-3">
-          <InputOTPSlot index={0} className={slotClassName} />
-          <InputOTPSlot index={1} className={slotClassName} />
-          <InputOTPSlot index={2} className={slotClassName} />
-        </InputOTPGroup>
+        <OtpSlotGroup startIndex={0} />
 
         <span
           className="select-none px-0.5 text-[1.5rem] font-light leading-none text-foreground/45"
@@ -50,15 +60,12 @@ export function OtpCodeInput({ value, onChange, disabled }: OtpCodeInputProps) {
           ·
         </span>
 
-        <InputOTPGroup className="gap-2.5 sm:gap-3">
-          <InputOTPSlot index={3} className={slotClassName} />
-          <InputOTPSlot index={4} className={slotClassName} />
-          <InputOTPSlot index={5} className={slotClassName} />
-        </InputOTPGroup>
+        <OtpSlotGroup startIndex={EMAIL_OTP_LENGTH === 8 ? 4 : 3} />
       </InputOTP>
 
       <p className="max-w-[16rem] text-center text-[13px] leading-snug text-foreground/65">
-        E-postandaki <span className="font-medium text-foreground/90">6 haneli</span> kodu gir
+        Enter the <span className="font-medium text-foreground/90">{label}</span> code from your
+        email
       </p>
     </div>
   )

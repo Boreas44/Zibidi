@@ -36,3 +36,18 @@ Sonra **Redeploy**.
 Server Actions artık isteğin host’unu kullanır (`zibidi.vercel.app` üzerinden gelen istek → canlı URL).
 
 Değişikliklerin etkisi için Git push + Vercel deploy gerekir.
+
+---
+
+## “Email rate limit exceeded”
+
+Supabase’in **varsayılan (ücretsiz) mail servisi** projeye saatte çok az mail izin verir (genelde **saatte ~2–4** auth maili — kayıt OTP, resend, şifre sıfırlama **hepsi aynı kotadan** düşer).
+
+**Ne yap:**
+
+1. **~1 saat bekle** — kota sıfırlanır.
+2. Testte **Resend code** / forgot password’u art arda spam’leme.
+3. Canlı için: custom SMTP → adım adım: **`supabase/MAILERSEND_SMTP.md`** (MailerSend) veya [Supabase SMTP rehberi](https://supabase.com/docs/guides/auth/auth-smtp).
+4. İsteğe bağlı: **Authentication → Rate Limits** → email limitlerini SMTP sonrası artır.
+
+Bu Zibidi kodu hatası değil; Supabase proje kotası.

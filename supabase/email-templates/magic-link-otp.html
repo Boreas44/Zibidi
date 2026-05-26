@@ -2,7 +2,8 @@
   Zibidi — OTP email (iOS dark, accent #f0355d)
   Supabase → Authentication → Email Templates → Magic Link
   Subject: Zibidi — your verification code
-  REQUIRED: {{ .Token }}, {{ .Email }}, {{ .Data.display_name }}
+  REQUIRED: {{ .Token }} (6 digits), {{ .Email }}, {{ .Data.display_name }}
+  OTP cells use index .Token 0–5 — set Email OTP length to 6 in Auth → Providers → Email.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -70,13 +71,47 @@
 
               <table role="presentation" cellspacing="0" cellpadding="0" align="center" class="ios-inset" style="margin:0 auto;max-width:340px;width:100%;">
                 <tr>
-                  <td style="padding:18px 24px 20px;text-align:center;">
-                    <span class="zibidi-accent" style="display:block;font-size:13px;font-weight:600;letter-spacing:-0.008em;line-height:1.2;color:#f0355d;margin-bottom:10px;font-family:'SF Pro Text','SF Pro Display',-apple-system,BlinkMacSystemFont,'San Francisco','Helvetica Neue',Helvetica,Arial,sans-serif;">
+                  <td style="padding:20px 16px 22px;text-align:center;">
+                    <span class="zibidi-accent" style="display:block;font-size:13px;font-weight:600;letter-spacing:-0.008em;line-height:1.2;color:#f0355d;margin-bottom:16px;font-family:'SF Pro Text','SF Pro Display',-apple-system,BlinkMacSystemFont,'San Francisco','Helvetica Neue',Helvetica,Arial,sans-serif;">
                       Verification code
                     </span>
-                    <span class="zibidi-code zibidi-accent" style="font-size:34px;font-weight:600;letter-spacing:0.24em;line-height:1;color:#f0355d;">
-                      {{ .Token }}
-                    </span>
+
+                    <!-- 3 + · + 3 cells — matches in-app OtpCodeInput -->
+                    <table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
+                      <tr>
+                        <td style="vertical-align:middle;">
+                          <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 0) }}</span>
+                            </td>
+                            <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 1) }}</span>
+                            </td>
+                            <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 2) }}</span>
+                            </td>
+                          </tr></table>
+                        </td>
+                        <td style="width:18px;text-align:center;vertical-align:middle;font-size:24px;font-weight:300;line-height:1;color:rgba(255,255,255,0.45);padding:0 2px;">·</td>
+                        <td style="vertical-align:middle;">
+                          <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 3) }}</span>
+                            </td>
+                            <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 4) }}</span>
+                            </td>
+                            <td style="width:10px;font-size:0;line-height:0;">&nbsp;</td>
+                            <td class="zibidi-otp-cell" style="width:50px;height:60px;text-align:center;vertical-align:middle;border:2px solid rgba(255,255,255,0.2);border-radius:16px;background-color:#38383a;box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 2px 8px rgba(0,0,0,0.25);">
+                              <span class="zibidi-code" style="font-size:28px;font-weight:700;line-height:1;color:#ffffff;font-family:'SF Mono','SF Mono Regular',SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;">{{ printf "%c" (index .Token 5) }}</span>
+                            </td>
+                          </tr></table>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>

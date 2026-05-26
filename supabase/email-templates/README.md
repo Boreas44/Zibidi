@@ -2,6 +2,14 @@
 
 Uygulama kodu e-postayı **Supabase Auth** gönderir. Tasarımı **sen** Supabase Dashboard’da (veya bu klasördeki HTML’i düzenleyip yapıştırarak) yaparsın.
 
+## OTP uzunluğu (6 vs 8)
+
+Mailde **8 hane**, uygulama **6** kutucuk gösteriyorsa: Supabase → **Authentication** → **Providers** → **Email** → **Email OTP length** = **6** (Zibidi `lib/auth/otp.ts` ile aynı olmalı).
+
+`magic-link-otp.html` shows **one digit per cell** (3 · 3 layout, same as the app Verify email screen). The template uses `{{ printf "%c" (index .Token 0) }}` … `index .Token 5` — **6-digit OTP only**.
+
+---
+
 ## Hâlâ link geliyorsa (kod gelmiyorsa)
 
 Bu **uygulama hatası değil** — Supabase şablonunda hâlâ link değişkeni vardır.

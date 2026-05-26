@@ -34,6 +34,34 @@ export interface Database {
           updated_at?: string
         }
       }
+      comments: {
+        Row: {
+          id: string
+          post_id: string
+          user_id: string
+          content: string
+          author_name: string
+          author_avatar: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          user_id: string
+          content: string
+          author_name: string
+          author_avatar?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          user_id?: string
+          content?: string
+          author_name?: string
+          author_avatar?: string
+        }
+      }
       posts: {
         Row: {
           id: string
@@ -85,4 +113,5 @@ export interface Database {
 }
 
 export type PostRow = Database["public"]["Tables"]["posts"]["Row"]
+export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]

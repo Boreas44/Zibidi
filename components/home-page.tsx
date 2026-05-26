@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar"
 import { SearchHeader } from "@/components/search-header"
 import { BlogCard, type BlogPost } from "@/components/blog-card"
 import { CreatePostPanel } from "@/components/create-post-panel"
+import { PostCommentsPanel } from "@/components/post-comments-panel"
 import { SettingsPanel } from "@/components/settings-panel"
 import { ProfilePanel } from "@/components/profile-panel"
 import { AuthPanel } from "@/components/auth-panel"
@@ -44,6 +45,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
+  const [commentsPost, setCommentsPost] = useState<BlogPost | null>(null)
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -142,6 +144,19 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
             }
           : post
       )
+    )
+  }
+
+  const handleOpenComments = (post: BlogPost) => {
+    setCommentsPost(post)
+  }
+
+  const handleCommentCountChange = (postId: string, count: number) => {
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, comments: count } : p))
+    )
+    setCommentsPost((prev) =>
+      prev?.id === postId ? { ...prev, comments: count } : prev
     )
   }
 
@@ -299,6 +314,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
                         post={post}
                         isOwner={!!user?.id && post.userId === user.id}
                         onLike={handleLike}
+                        onComment={handleOpenComments}
                         onBookmark={handleBookmark}
                         onDelete={handleDeletePost}
                         isDeleting={deletingPostId === post.id}
@@ -341,6 +357,15 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
         onClose={() => setIsPanelOpen(false)}
         onSubmit={handleCreatePost}
         isSubmitting={isSubmitting}
+      />
+
+      <PostCommentsPanel
+        post={commentsPost}
+        isOpen={!!commentsPost}
+        onClose={() => setCommentsPost(null)}
+        user={user}
+        onOpenAuth={openAuth}
+        onCommentCountChange={handleCommentCountChange}
       />
 
       <AuthPanel

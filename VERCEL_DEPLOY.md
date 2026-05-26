@@ -119,9 +119,9 @@ Geliştirmede e-posta onayı kapalıysa canlıda da politikanı bilin; reset ve 
 
 Ücretsiz Supabase maili sınırlıdır. Canlıda:
 
-**Project Settings** → **Auth** → **SMTP** → Resend / SendGrid vb. bağla.
+**Authentication** → **SMTP** → örn. [MailerSend](https://app.mailersend.com/) (`supabase/MAILERSEND_SMTP.md`).
 
-Şablonlar yine Dashboard’da; sadece gönderen adres değişir.
+Şablonlar yine Dashboard’da; sadece gönderen adres değişir. Vercel env’e SMTP şifresi ekleme.
 
 ---
 

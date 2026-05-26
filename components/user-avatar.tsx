@@ -42,7 +42,7 @@ export function UserAvatar({
     )
   }
 
-  /* Guest veya profil fotoğrafı yok — baş harf yerine marka maskesi */
+  /* No profile photo — brand placeholder instead of initials */
   return (
     <span
       className={cn(

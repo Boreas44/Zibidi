@@ -1,5 +1,21 @@
 # Zibidi — E-posta OTP (6 haneli kod)
 
+## Mailde 8 hane geliyor, uygulama 6 istiyor
+
+Supabase proje ayarı **8** olabilir. Zibidi `lib/auth/otp.ts` içinde `EMAIL_OTP_LENGTH = 6` kullanır.
+
+**Düzelt (önerilen):**
+
+1. [Supabase Dashboard](https://supabase.com/dashboard) → **Authentication** → **Providers** → **Email**
+2. **Email OTP length** (veya benzeri) → **6**
+3. **Save** → yeni kod iste
+
+Doğrudan link: `https://supabase.com/dashboard/project/_/auth/providers?provider=Email` (proje ref’ini seç)
+
+8 hane kullanmak istersen: `lib/auth/otp.ts` içinde `EMAIL_OTP_LENGTH = 8` yap ve Supabase’te de 8 seç.
+
+---
+
 ## Link geliyor, kod gelmiyor mu?
 
 Kod tarafı hazır (`signInWithOtp`). Mail **Supabase şablonundan** çıkar.

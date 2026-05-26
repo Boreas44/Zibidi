@@ -4,8 +4,8 @@ import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Zibidi — paylaş, keşfet, yaz',
-  description: 'Zibidi ile içerik oluştur, keşfet ve paylaş. Apple Music tarzı modern bir blog deneyimi.',
+  title: 'Zibidi — share, discover, write',
+  description: 'Create, discover, and share on Zibidi. A modern blog experience inspired by Apple Music.',
   generator: 'v0.app',
   icons: {
     icon: [{ url: '/WhiteLGO.png', type: 'image/png' }],

@@ -43,6 +43,7 @@ interface BlogCardProps {
   post: BlogPost
   isOwner?: boolean
   onLike?: (id: string) => void
+  onComment?: (post: BlogPost) => void
   onBookmark?: (id: string) => void
   onDelete?: (id: string) => void
   isDeleting?: boolean
@@ -52,6 +53,7 @@ export function BlogCard({
   post,
   isOwner = false,
   onLike,
+  onComment,
   onBookmark,
   onDelete,
   isDeleting = false,
@@ -186,9 +188,17 @@ export function BlogCard({
               <Heart className={`h-3.5 w-3.5 ${post.isLiked ? "fill-primary" : ""}`} />
               <span>{post.likes}</span>
             </button>
-            <button className="flex items-center gap-1.5 text-[12px] text-muted-foreground transition-smooth hover:text-foreground">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                onComment?.(post)
+              }}
+              className="flex items-center gap-1.5 text-[12px] text-muted-foreground transition-smooth hover:text-foreground"
+            >
               <MessageCircle className="h-3.5 w-3.5" />
               <span>{post.comments}</span>
+              <span className="sr-only">View comments</span>
             </button>
           </div>
           <button
