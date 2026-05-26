@@ -1,8 +1,9 @@
 "use client"
 
-import { Image as ImageIcon, Link2, Bold, Italic, List } from "lucide-react"
+import { Bold, Italic, List } from "lucide-react"
 import { useState } from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { PostMediaInput } from "@/components/post-media-input"
 import {
   Drawer,
   DrawerContent,
@@ -18,6 +19,7 @@ import {
   PUBLICATION_CATEGORIES,
   type CategoryId,
 } from "@/lib/categories"
+import type { PostMedia } from "@/lib/post-media"
 
 interface CreatePostPanelProps {
   isOpen: boolean
@@ -26,6 +28,7 @@ interface CreatePostPanelProps {
     title: string
     content: string
     category: string
+    media?: PostMedia | null
   }) => void | Promise<void>
   isSubmitting?: boolean
 }
@@ -40,14 +43,16 @@ export function CreatePostPanel({
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [category, setCategory] = useState<CategoryId>(DEFAULT_CATEGORY_ID)
+  const [media, setMedia] = useState<PostMedia | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !content.trim() || isSubmitting) return
-    await onSubmit({ title, content, category })
+    await onSubmit({ title, content, category, media })
     setTitle("")
     setContent("")
     setCategory(DEFAULT_CATEGORY_ID)
+    setMedia(null)
   }
 
   const isValid = title.trim().length > 0 && content.trim().length > 0
@@ -118,12 +123,6 @@ export function CreatePostPanel({
                   <List className="h-4 w-4" />
                 </Button>
                 <div className="mx-1 h-5 w-px bg-border" />
-                <Button type="button" variant="ghost" size="icon-sm" aria-label="Add image">
-                  <ImageIcon className="h-4 w-4" />
-                </Button>
-                <Button type="button" variant="ghost" size="icon-sm" aria-label="Add link">
-                  <Link2 className="h-4 w-4" />
-                </Button>
               </div>
               <Textarea
                 id="content"
@@ -137,14 +136,13 @@ export function CreatePostPanel({
 
             <div>
               <label className="mb-2 block text-[13px] font-medium text-muted-foreground">
-                Cover Image
+                Media
               </label>
-              <div className="flex h-28 cursor-pointer items-center justify-center rounded-2xl border-2 border-dashed border-border bg-ios-fill-secondary transition-smooth hover:border-primary/40 hover:bg-accent">
-                <div className="text-center">
-                  <ImageIcon className="mx-auto mb-2 h-7 w-7 text-muted-foreground" />
-                  <p className="text-[13px] text-muted-foreground">Tap to upload</p>
-                </div>
-              </div>
+              <PostMediaInput
+                value={media}
+                onChange={setMedia}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 

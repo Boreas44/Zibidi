@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { deleteAllPosts, deletePost, fetchPostById, insertPost } from "@/lib/posts"
 import type { BlogPost } from "@/components/blog-card"
+import type { PostMedia } from "@/lib/post-media"
 
 export type CreatePostResult =
   | { success: true; post: BlogPost }
@@ -75,6 +76,7 @@ export async function createPostAction(input: {
   title: string
   content: string
   category: string
+  media?: PostMedia | null
 }): Promise<CreatePostResult> {
   try {
     if (!input.title.trim() || !input.content.trim()) {
@@ -85,6 +87,7 @@ export async function createPostAction(input: {
       title: input.title,
       content: input.content,
       category: input.category,
+      media: input.media ?? null,
     })
 
     if (error || !post) {

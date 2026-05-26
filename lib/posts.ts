@@ -15,6 +15,11 @@ import { createClient } from "@/lib/supabase/server"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { formatDateTime } from "@/lib/format-datetime"
 import { isKnownCategory, resolveCategoryId } from "@/lib/categories"
+import {
+  getMediaCoverUrl,
+  parsePostMediaFromDb,
+  type PostMedia,
+} from "@/lib/post-media"
 
 export function mapPostRowToBlogPost(
   row: PostRow,
@@ -35,6 +40,7 @@ export function mapPostRowToBlogPost(
     excerpt: row.excerpt,
     author,
     coverImage: row.cover_image || "",
+    media: parsePostMediaFromDb(row.media),
     category: row.category,
     readTime: row.read_time,
     likes: row.likes_count,
@@ -209,6 +215,7 @@ export async function insertPost(input: {
   title: string
   content: string
   category: string
+  media?: PostMedia | null
 }): Promise<{ post: BlogPost | null; error: string | null }> {
   const profile = await getSessionProfile()
   if (!profile) {
@@ -231,7 +238,8 @@ export async function insertPost(input: {
     category: categoryId,
     author_name: profile.displayName,
     author_avatar: profile.avatarUrl ?? "",
-    cover_image: "",
+    cover_image: getMediaCoverUrl(input.media),
+    media: input.media ?? null,
     read_time: buildReadTime(input.content),
     likes_count: 0,
     dislikes_count: 0,

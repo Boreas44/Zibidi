@@ -11,6 +11,7 @@ import { CategoryBadge } from "@/components/category-badge"
 import { getCategoryFlag } from "@/lib/categories"
 import { UserAvatar } from "@/components/user-avatar"
 import type { PostReactionKind } from "@/lib/post-reactions"
+import { PostMediaPlayer } from "@/components/post-media-player"
 
 interface PostArticleProps {
   post: BlogPost
@@ -84,7 +85,11 @@ export function PostArticle({
         {post.title}
       </h1>
 
-      {post.coverImage?.trim() ? (
+      {post.media ? (
+        <div className="mt-6 overflow-hidden rounded-2xl border border-border">
+          <PostMediaPlayer media={post.media} title={post.title} variant="article" />
+        </div>
+      ) : post.coverImage?.trim() ? (
         <div className="mt-6 overflow-hidden rounded-2xl border border-border">
           <img src={post.coverImage} alt="" className="aspect-[16/10] w-full object-cover" />
         </div>

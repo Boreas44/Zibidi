@@ -72,6 +72,7 @@ export interface Database {
           author_name: string
           author_avatar: string
           cover_image: string
+          media: Json | null
           read_time: string
           likes_count: number
           dislikes_count: number
@@ -88,6 +89,7 @@ export interface Database {
           author_name: string
           author_avatar?: string
           cover_image?: string
+          media?: Json | null
           read_time: string
           likes_count?: number
           dislikes_count?: number
@@ -104,6 +106,7 @@ export interface Database {
           author_name?: string
           author_avatar?: string
           cover_image?: string
+          media?: Json | null
           read_time?: string
           likes_count?: number
           dislikes_count?: number

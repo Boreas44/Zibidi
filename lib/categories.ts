@@ -10,6 +10,10 @@ export type PublicationCategory = {
   flag?: string
   gradient: string
   image: string
+  /** Direct MP4 URL — played silently on hover. */
+  video?: string
+  /** GIF URL — shown on hover, hidden on leave. */
+  gif?: string
 }
 
 export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
@@ -20,6 +24,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#f7971e] via-[#ffd200] to-[#f7971e]",
     image:
       "https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/snaptik_7401777603612396807_v3_xufbi6.mp4",
   },
   {
     id: "ladies",
@@ -28,6 +34,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#f093fb] via-[#f5576c] to-[#f093fb]",
     image:
       "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/DieserTrendinHamburgimMai-nineaarttrendsetmefreecantgetyououtofmyheaddance-ezgif.com-mute-video_l9uanh.mp4",
   },
   {
     id: "war",
@@ -36,6 +44,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#434343] via-[#1a1a1a] to-[#434343]",
     image:
       "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/v1779814782/vecteezy_fighter-jets-in-formation-from-cockpit-view_72703906_rou2bb.mp4",
   },
   {
     id: "turkey",
@@ -45,6 +55,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#fd746c] via-[#ff9068] to-[#fd746c]",
     image:
       "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/vecteezy_turkey-realistic-waving-flag-smooth-seamless-loop-4k-video_10248673_nnykwc.mp4",
   },
   {
     id: "eu",
@@ -54,6 +66,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#4facfe] via-[#00f2fe] to-[#4facfe]",
     image:
       "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/v1779814657/vecteezy_european-union-waving-flag-seamless-loop-animation-4k_9852476_mssmfz.mp4",
   },
   {
     id: "usa",
@@ -63,6 +77,8 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     gradient: "from-[#a18cd1] via-[#fbc2eb] to-[#a18cd1]",
     image:
       "https://images.unsplash.com/photo-1485738429739-123b19dfcdc1?w=400&h=200&fit=crop",
+    video:
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/v1779814520/vecteezy_american-waving-flag-seamless-loop-animation-4k-resolution_8969666_tupp5e.mp4",
   },
 ]
 

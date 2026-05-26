@@ -28,6 +28,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { PostMediaThumbnail } from "@/components/post-media-player"
+import type { PostMedia } from "@/lib/post-media"
 
 export interface BlogPost {
   id: string
@@ -40,6 +42,7 @@ export interface BlogPost {
     avatar: string
   }
   coverImage: string
+  media?: PostMedia | null
   category: string
   readTime: string
   likes: number
@@ -92,9 +95,15 @@ export function BlogCard({
       role={onOpen ? "link" : undefined}
       tabIndex={onOpen ? 0 : undefined}
     >
-      {/* Cover Image */}
+      {/* Cover / Media */}
       <div className="relative aspect-[16/10] overflow-hidden bg-ios-fill-secondary">
-        {post.coverImage?.trim() ? (
+        {post.media ? (
+          <PostMediaThumbnail
+            media={post.media}
+            title={post.title}
+            isHovered={isHovered}
+          />
+        ) : post.coverImage?.trim() ? (
           <img
             src={post.coverImage}
             alt={post.title}

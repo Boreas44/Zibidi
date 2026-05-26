@@ -13,6 +13,7 @@ import type { PostReactionKind } from "@/lib/post-reactions"
 import { CategoryBadge } from "@/components/category-badge"
 import { getCategoryFlag } from "@/lib/categories"
 import { cn } from "@/lib/utils"
+import { PostMediaPlayer, PostMediaThumbnail } from "@/components/post-media-player"
 
 interface PostIslandProps {
   post: BlogPost
@@ -41,7 +42,22 @@ export function PostIsland({
         className
       )}
     >
-      {post.coverImage?.trim() ? (
+      {post.media ? (
+        <div className="relative h-36 shrink-0 overflow-hidden">
+          {post.media.type === "youtube" || post.media.type === "instagram" ? (
+            <PostMediaThumbnail media={post.media} title={post.title} />
+          ) : (
+            <PostMediaPlayer media={post.media} title={post.title} variant="compact" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent pointer-events-none" />
+          <CategoryBadge
+            category={post.category}
+            variant="pill"
+            showName={false}
+            className="absolute left-4 top-4"
+          />
+        </div>
+      ) : post.coverImage?.trim() ? (
         <div className="relative h-36 shrink-0 overflow-hidden">
           <img src={post.coverImage} alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
@@ -80,7 +96,7 @@ export function PostIsland({
               {post.createdAt} · {post.readTime}
             </p>
           </div>
-          {post.coverImage?.trim() && onOpenFullPost ? (
+          {(post.coverImage?.trim() || post.media) && onOpenFullPost ? (
             <button
               type="button"
               onClick={onOpenFullPost}

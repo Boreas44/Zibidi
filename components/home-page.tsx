@@ -17,6 +17,7 @@ import { IosTabBar } from "@/components/ios/ios-tab-bar"
 import { togglePostReactionAction } from "@/app/actions/reactions"
 import { toggleSavedPostAction } from "@/app/actions/saved-posts"
 import { createPostAction, deletePostAction } from "@/app/actions/posts"
+import type { PostMedia } from "@/lib/post-media"
 import type { PostReactionKind } from "@/lib/post-reactions"
 import {
   computeOptimisticReaction,
@@ -398,6 +399,7 @@ export function HomePage({ initialPosts, user }: HomePageProps) {
     title: string
     content: string
     category: string
+    media?: PostMedia | null
   }) => {
     setIsSubmitting(true)
     try {
