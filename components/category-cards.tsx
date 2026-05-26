@@ -58,16 +58,12 @@ export function CategoryCards({ onCategorySelect, selectedCategory }: CategoryCa
             ) : category.gif ? (
               <img
                 key={hoveredId === category.id ? `${category.id}-hover` : category.id}
-                src={hoveredId === category.id ? category.gif : category.image}
+                src={category.gif}
                 alt={category.pillar}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
-              <img
-                src={category.image}
-                alt={category.pillar}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
+              <div className="absolute inset-0 h-full w-full bg-neutral-200" />
             )}
             <div
               className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-45`}
