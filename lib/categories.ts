@@ -32,9 +32,9 @@ export const PUBLICATION_CATEGORIES: PublicationCategory[] = [
     title: "Her Signal",
     gradient: "from-[#f093fb] via-[#f5576c] to-[#f093fb]",
     video:
-      "https://res.cloudinary.com/dsnwi9kev/video/upload/DieserTrendinHamburgimMai-nineaarttrendsetmefreecantgetyououtofmyheaddance-ezgif.com-mute-video_l9uanh.mp4",
+      "https://res.cloudinary.com/dsnwi9kev/video/upload/v1779833034/vecteezy_cheerful-happy-woman-walking-near-ocean-beach-on-vacation_43266874_gfgmqp.mp4",
     source:
-      '<a href="https://www.vecteezy.com/video/43266874-cheerful-happy-woman-walking-near-ocean-beach-on-vacation">cheerful-happy-woman-walking-near-ocean-beach-on-vacation Stock Videos by Vecteezy</a>',
+      "https://www.vecteezy.com/video/43266874-cheerful-happy-woman-walking-near-ocean-beach-on-vacation",
   },
   {
     id: "war",
