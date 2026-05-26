@@ -86,6 +86,7 @@ Run migrations **in order** in the Supabase SQL Editor:
 | 4 | [`005_comments.sql`](./supabase/migrations/005_comments.sql) | Comments + count trigger |
 | 5 | [`006_unique_display_names_sync.sql`](./supabase/migrations/006_unique_display_names_sync.sql) | Unique display names + author sync |
 | 6 | [`007_post_reactions.sql`](./supabase/migrations/007_post_reactions.sql) | Persistent likes / dislikes |
+| 7 | [`008_replies_realtime.sql`](./supabase/migrations/008_replies_realtime.sql) | Nested replies + Supabase Realtime |
 
 **Authentication → URL configuration**
 

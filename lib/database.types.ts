@@ -111,6 +111,40 @@ export interface Database {
           user_id?: string | null
         }
       }
+      replies: {
+        Row: {
+          id: string
+          post_id: string
+          comment_id: string
+          parent_reply_id: string | null
+          user_id: string
+          content: string
+          author_name: string
+          author_avatar: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          comment_id: string
+          parent_reply_id?: string | null
+          user_id: string
+          content: string
+          author_name: string
+          author_avatar?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          comment_id?: string
+          parent_reply_id?: string | null
+          user_id?: string
+          content?: string
+          author_name?: string
+          author_avatar?: string
+        }
+      }
       post_reactions: {
         Row: {
           id: string
@@ -138,6 +172,7 @@ export interface Database {
 }
 
 export type PostRow = Database["public"]["Tables"]["posts"]["Row"]
+export type ReplyRow = Database["public"]["Tables"]["replies"]["Row"]
 export type PostReactionRow = Database["public"]["Tables"]["post_reactions"]["Row"]
 export type CommentRow = Database["public"]["Tables"]["comments"]["Row"]
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]

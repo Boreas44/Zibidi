@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import {
   deleteComment,
   fetchCommentsForPost,
@@ -40,7 +39,6 @@ export async function createCommentAction(input: {
     if (error || !comment) {
       return { success: false, error: error ?? "Could not post comment." }
     }
-    revalidatePath("/")
     return { success: true, data: comment }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not post comment."
@@ -60,7 +58,6 @@ export async function deleteCommentAction(
     if (error) {
       return { success: false, error }
     }
-    revalidatePath("/")
     return { success: true, data: null }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Could not delete comment."

@@ -1,9 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Loader2, Send, Trash2 } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Loader2, Send } from "lucide-react"
 import { toast } from "sonner"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { usePostRepliesRealtime } from "@/hooks/use-post-replies-realtime"
 import {
   Drawer,
   DrawerContent,
@@ -14,14 +15,24 @@ import {
 } from "@/components/ui/drawer"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { UserAvatar } from "@/components/user-avatar"
+import {
+  CommentThreadItem,
+  type ReplyTarget,
+} from "@/components/comments/comment-thread-item"
 import type { BlogPost } from "@/components/blog-card"
 import type { PostComment } from "@/lib/comments"
+import type { CommentReply } from "@/lib/replies-shared"
+import { countRepliesInMap, groupRepliesByCommentId } from "@/lib/replies-tree"
 import {
   createCommentAction,
   deleteCommentAction,
   fetchCommentsAction,
 } from "@/app/actions/comments"
+import {
+  createReplyAction,
+  deleteReplyAction,
+  fetchRepliesAction,
+} from "@/app/actions/replies"
 import type { AppProfile } from "@/lib/auth/server"
 
 interface PostCommentsPanelProps {
@@ -43,29 +54,92 @@ export function PostCommentsPanel({
 }: PostCommentsPanelProps) {
   const isMobile = useIsMobile()
   const [comments, setComments] = useState<PostComment[]>([])
+  const [repliesByComment, setRepliesByComment] = useState<
+    Record<string, CommentReply[]>
+  >({})
   const [draft, setDraft] = useState("")
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null)
+  const [replyDraft, setReplyDraft] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false)
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null)
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null)
+  const [newReplyIds, setNewReplyIds] = useState<Set<string>>(() => new Set())
 
   const postId = post?.id
   const onCountChangeRef = useRef(onCommentCountChange)
   onCountChangeRef.current = onCommentCountChange
 
-  const loadComments = useCallback(async () => {
+  const totalThreadCount = useMemo(
+    () => comments.length + countRepliesInMap(repliesByComment),
+    [comments.length, repliesByComment]
+  )
+
+  useEffect(() => {
+    if (!isOpen || !postId) return
+    onCountChangeRef.current?.(postId, totalThreadCount)
+  }, [isOpen, postId, totalThreadCount])
+
+  const markReplyFlyIn = useCallback((replyId: string) => {
+    setNewReplyIds((prev) => new Set(prev).add(replyId))
+  }, [])
+
+  const clearReplyFlyIn = useCallback((replyId: string) => {
+    setNewReplyIds((prev) => {
+      const next = new Set(prev)
+      next.delete(replyId)
+      return next
+    })
+  }, [])
+
+  const injectReply = useCallback(
+    (reply: CommentReply) => {
+      markReplyFlyIn(reply.id)
+      setRepliesByComment((prev) => {
+        const list = prev[reply.commentId] ?? []
+        if (list.some((r) => r.id === reply.id)) return prev
+        return { ...prev, [reply.commentId]: [...list, reply] }
+      })
+    },
+    [markReplyFlyIn]
+  )
+
+  usePostRepliesRealtime({
+    postId,
+    enabled: isOpen && Boolean(postId),
+    currentUserId: user?.id,
+    onInsert: injectReply,
+  })
+
+  const loadThread = useCallback(async () => {
     if (!postId) return
     setIsLoading(true)
     setLoadError(null)
     try {
-      const result = await fetchCommentsAction(postId)
-      if (result.success) {
-        setComments(result.data)
-        onCountChangeRef.current?.(postId, result.data.length)
-      } else {
-        setLoadError(result.error)
-        toast.error(result.error)
+      const [commentsResult, repliesResult] = await Promise.all([
+        fetchCommentsAction(postId),
+        fetchRepliesAction(postId),
+      ])
+
+      if (!commentsResult.success) {
+        setLoadError(commentsResult.error)
+        toast.error(commentsResult.error)
+        return
       }
+
+      const grouped = repliesResult.success
+        ? groupRepliesByCommentId(repliesResult.data)
+        : {}
+
+      if (!repliesResult.success && repliesResult.error) {
+        toast.error(repliesResult.error)
+      }
+
+      setComments(commentsResult.data)
+      setRepliesByComment(grouped)
+      setNewReplyIds(new Set())
     } catch {
       const message = "Could not load comments."
       setLoadError(message)
@@ -78,16 +152,22 @@ export function PostCommentsPanel({
   useEffect(() => {
     if (isOpen && postId) {
       setDraft("")
-      void loadComments()
+      setReplyTarget(null)
+      setReplyDraft("")
+      void loadThread()
     }
     if (!isOpen) {
       setComments([])
+      setRepliesByComment({})
+      setNewReplyIds(new Set())
       setDraft("")
+      setReplyTarget(null)
+      setReplyDraft("")
       setLoadError(null)
     }
-  }, [isOpen, postId, loadComments])
+  }, [isOpen, postId, loadThread])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!post || !draft.trim() || isSubmitting) return
 
@@ -104,9 +184,7 @@ export function PostCommentsPanel({
         content: draft,
       })
       if (result.success) {
-        const nextCount = comments.length + 1
         setComments((prev) => [...prev, result.data])
-        onCountChangeRef.current?.(post.id, nextCount)
         setDraft("")
         toast.success("Comment posted")
       } else {
@@ -119,15 +197,48 @@ export function PostCommentsPanel({
     }
   }
 
-  const handleDelete = async (commentId: string) => {
+  const handleSubmitReply = async () => {
+    if (!post || !replyTarget || !replyDraft.trim() || isSubmittingReply) return
+
+    if (!user) {
+      toast.error("Sign in to reply")
+      onOpenAuth("signin")
+      return
+    }
+
+    setIsSubmittingReply(true)
+    try {
+      const result = await createReplyAction({
+        postId: post.id,
+        commentId: replyTarget.commentId,
+        parentReplyId: replyTarget.parentReplyId,
+        content: replyDraft,
+      })
+      if (result.success) {
+        injectReply(result.data)
+        setReplyDraft("")
+        setReplyTarget(null)
+        toast.success("Reply posted")
+      } else {
+        toast.error(result.error)
+      }
+    } catch {
+      toast.error("Could not post reply.")
+    } finally {
+      setIsSubmittingReply(false)
+    }
+  }
+
+  const handleDeleteComment = async (commentId: string) => {
     if (!post) return
-    setDeletingId(commentId)
+    setDeletingCommentId(commentId)
     try {
       const result = await deleteCommentAction(commentId)
       if (result.success) {
-        const nextCount = Math.max(0, comments.length - 1)
+        const nextReplies = { ...repliesByComment }
+        delete nextReplies[commentId]
         setComments((prev) => prev.filter((c) => c.id !== commentId))
-        onCountChangeRef.current?.(post.id, nextCount)
+        setRepliesByComment(nextReplies)
         toast.success("Comment deleted")
       } else {
         toast.error(result.error)
@@ -135,7 +246,34 @@ export function PostCommentsPanel({
     } catch {
       toast.error("Could not delete comment.")
     } finally {
-      setDeletingId(null)
+      setDeletingCommentId(null)
+    }
+  }
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!post) return
+    setDeletingReplyId(replyId)
+    try {
+      const result = await deleteReplyAction(replyId)
+      if (result.success) {
+        setRepliesByComment((prev) => {
+          const next: Record<string, CommentReply[]> = {}
+          for (const [commentId, list] of Object.entries(prev)) {
+            const filtered = list.filter((r) => r.id !== replyId)
+            if (filtered.length > 0) {
+              next[commentId] = filtered
+            }
+          }
+          return next
+        })
+        toast.success("Reply deleted")
+      } else {
+        toast.error(result.error)
+      }
+    } catch {
+      toast.error("Could not delete reply.")
+    } finally {
+      setDeletingReplyId(null)
     }
   }
 
@@ -151,7 +289,8 @@ export function PostCommentsPanel({
             {post?.title ?? "Comments"}
           </DrawerTitle>
           <DrawerDescription className="text-[13px]">
-            {comments.length} {comments.length === 1 ? "comment" : "comments"}
+            {totalThreadCount}{" "}
+            {totalThreadCount === 1 ? "comment" : "comments & replies"}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -163,17 +302,20 @@ export function PostCommentsPanel({
               </div>
             ) : loadError ? (
               <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-6 text-center">
-                <p className="text-[15px] font-medium text-foreground">Could not load comments</p>
+                <p className="text-[15px] font-medium text-foreground">
+                  Could not load comments
+                </p>
                 <p className="mt-2 text-[13px] text-muted-foreground">{loadError}</p>
                 <p className="mt-3 text-[12px] text-muted-foreground">
-                  Run <code className="rounded bg-ios-fill px-1">005_comments.sql</code> in Supabase if
-                  you have not yet.
+                  Run migrations{" "}
+                  <code className="rounded bg-ios-fill px-1">005_comments.sql</code> and{" "}
+                  <code className="rounded bg-ios-fill px-1">008_replies_realtime.sql</code>
                 </p>
                 <Button
                   type="button"
                   variant="outline"
                   className="mt-4"
-                  onClick={() => void loadComments()}
+                  onClick={() => void loadThread()}
                 >
                   Try again
                 </Button>
@@ -187,51 +329,39 @@ export function PostCommentsPanel({
               </div>
             ) : (
               <ul className="space-y-4">
-                {comments.map((comment) => {
-                  const isOwn = user?.id === comment.userId
-                  return (
-                    <li
-                      key={comment.id}
-                      className="rounded-2xl border border-border bg-ios-fill-secondary p-3"
-                    >
-                      <div className="mb-2 flex items-start gap-2.5">
-                        <UserAvatar
-                          name={comment.author.name}
-                          avatarUrl={comment.author.avatar}
-                          size="sm"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-medium text-foreground">
-                            {comment.author.name}
-                          </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {comment.createdAt}
-                          </p>
-                        </div>
-                        {isOwn && (
-                          <button
-                            type="button"
-                            disabled={deletingId === comment.id}
-                            onClick={() => void handleDelete(comment.id)}
-                            className="rounded-full p-1.5 text-muted-foreground transition-smooth hover:bg-accent hover:text-destructive disabled:opacity-50"
-                            aria-label="Delete comment"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
-                      <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-foreground/90">
-                        {comment.content}
-                      </p>
-                    </li>
-                  )
-                })}
+                {comments.map((comment) => (
+                  <CommentThreadItem
+                    key={comment.id}
+                    comment={comment}
+                    replies={repliesByComment[comment.id] ?? []}
+                    newReplyIds={newReplyIds}
+                    currentUserId={user?.id}
+                    replyTarget={replyTarget}
+                    replyDraft={replyDraft}
+                    isSubmittingReply={isSubmittingReply}
+                    deletingCommentId={deletingCommentId}
+                    deletingReplyId={deletingReplyId}
+                    onReplyTarget={(target) => {
+                      setReplyTarget(target)
+                      setReplyDraft("")
+                    }}
+                    onReplyDraftChange={setReplyDraft}
+                    onSubmitReply={() => void handleSubmitReply()}
+                    onCancelReply={() => {
+                      setReplyTarget(null)
+                      setReplyDraft("")
+                    }}
+                    onDeleteComment={(id) => void handleDeleteComment(id)}
+                    onDeleteReply={(id) => void handleDeleteReply(id)}
+                    onFlyInComplete={clearReplyFlyIn}
+                  />
+                ))}
               </ul>
             )}
           </div>
 
           <DrawerFooter className="border-t border-border bg-card px-4 pb-6 pt-4 md:px-6">
-            <form onSubmit={handleSubmit} className="w-full space-y-3">
+            <form onSubmit={handleSubmitComment} className="w-full space-y-3">
               <Textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
