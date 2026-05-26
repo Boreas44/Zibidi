@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
-import { getAuthSiteUrl } from "@/lib/auth/site-url"
-import { isSupabaseConfigured } from "@/lib/supabase/env"
+import { getAuthCallbackUrl } from "@/lib/auth/site-url"
+import {
+  getSupabaseConfigError,
+  isSupabaseConfigured,
+} from "@/lib/supabase/env"
 import {
   isStrongPassword,
   PASSWORD_STRONG_ERROR,
@@ -21,15 +24,38 @@ function normalizeOtp(token: string) {
   return token.replace(/\D/g, "").slice(0, 6)
 }
 
+function supabaseMisconfigResult(): AuthResult | null {
+  const configError = getSupabaseConfigError()
+  if (configError) {
+    return { success: false, error: configError }
+  }
+  return null
+}
+
+/** Supabase client throws when the API URL returns HTML (wrong env). */
+function formatAuthError(err: unknown, fallback: string): string {
+  const message = err instanceof Error ? err.message : fallback
+  if (
+    message.includes("not valid JSON") ||
+    message.includes("<!DOCTYPE") ||
+    message.includes("Unexpected token '<'")
+  ) {
+    return (
+      "Supabase connection failed. In Vercel, set NEXT_PUBLIC_SUPABASE_URL to " +
+      "your …supabase.co project URL (not zibidi.vercel.app)."
+    )
+  }
+  return message || fallback
+}
+
 /** Kayıt: e-postaya 6 haneli kod gönderir (Magic Link şablonunda yalnızca {{ .Token }}). */
 export async function startSignUpAction(input: {
   email: string
   password: string
   displayName: string
 }): Promise<AuthResult> {
-  if (!isSupabaseConfigured()) {
-    return { success: false, error: "Supabase is not configured. Add .env.local keys." }
-  }
+  const misconfig = supabaseMisconfigResult()
+  if (misconfig) return misconfig
 
   try {
     const email = normalizeEmail(input.email)
@@ -43,10 +69,12 @@ export async function startSignUpAction(input: {
     }
 
     const supabase = await createClient()
+    const emailRedirectTo = await getAuthCallbackUrl()
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
+        emailRedirectTo,
         data: { display_name: displayName },
       },
     })
@@ -61,8 +89,7 @@ export async function startSignUpAction(input: {
       message: "We sent a 6-digit code to your email. Enter it below.",
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sign up failed."
-    return { success: false, error: message }
+    return { success: false, error: formatAuthError(err, "Sign up failed.") }
   }
 }
 
@@ -73,9 +100,8 @@ export async function verifySignUpOtpAction(input: {
   password: string
   displayName: string
 }): Promise<AuthResult> {
-  if (!isSupabaseConfigured()) {
-    return { success: false, error: "Supabase is not configured." }
-  }
+  const misconfig = supabaseMisconfigResult()
+  if (misconfig) return misconfig
 
   try {
     const email = normalizeEmail(input.email)
@@ -136,8 +162,7 @@ export async function verifySignUpOtpAction(input: {
     revalidatePath("/")
     return { success: true, message: "Email verified. Welcome to Zibidi!" }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Verification failed."
-    return { success: false, error: message }
+    return { success: false, error: formatAuthError(err, "Verification failed.") }
   }
 }
 
@@ -146,9 +171,8 @@ export async function resendSignUpOtpAction(input: {
   email: string
   displayName?: string
 }): Promise<AuthResult> {
-  if (!isSupabaseConfigured()) {
-    return { success: false, error: "Supabase is not configured." }
-  }
+  const misconfig = supabaseMisconfigResult()
+  if (misconfig) return misconfig
 
   try {
     const email = normalizeEmail(input.email)
@@ -158,10 +182,12 @@ export async function resendSignUpOtpAction(input: {
 
     const supabase = await createClient()
     const displayName = input.displayName?.trim()
+    const emailRedirectTo = await getAuthCallbackUrl()
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
+        emailRedirectTo,
         ...(displayName ? { data: { display_name: displayName } } : {}),
       },
     })
@@ -172,8 +198,7 @@ export async function resendSignUpOtpAction(input: {
 
     return { success: true, message: "A new code was sent to your email." }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not resend code."
-    return { success: false, error: message }
+    return { success: false, error: formatAuthError(err, "Could not resend code.") }
   }
 }
 
@@ -181,9 +206,8 @@ export async function resendSignUpOtpAction(input: {
 export async function requestPasswordResetAction(input: {
   email: string
 }): Promise<AuthResult> {
-  if (!isSupabaseConfigured()) {
-    return { success: false, error: "Supabase is not configured." }
-  }
+  const misconfig = supabaseMisconfigResult()
+  if (misconfig) return misconfig
 
   try {
     const email = normalizeEmail(input.email)
@@ -192,7 +216,7 @@ export async function requestPasswordResetAction(input: {
     }
 
     const supabase = await createClient()
-    const redirectTo = `${getAuthSiteUrl()}/auth/callback?next=/auth/reset-password`
+    const redirectTo = `${await getAuthCallbackUrl()}?next=/auth/reset-password`
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,
@@ -207,8 +231,10 @@ export async function requestPasswordResetAction(input: {
       message: "If an account exists for this email, we sent a reset link.",
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not send reset email."
-    return { success: false, error: message }
+    return {
+      success: false,
+      error: formatAuthError(err, "Could not send reset email."),
+    }
   }
 }
 
@@ -248,8 +274,10 @@ export async function updatePasswordAction(input: {
     revalidatePath("/")
     return { success: true, message: "Password updated. You can sign in now." }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Could not update password."
-    return { success: false, error: message }
+    return {
+      success: false,
+      error: formatAuthError(err, "Could not update password."),
+    }
   }
 }
 
@@ -257,9 +285,8 @@ export async function signInAction(input: {
   email: string
   password: string
 }): Promise<AuthResult> {
-  if (!isSupabaseConfigured()) {
-    return { success: false, error: "Supabase is not configured. Add .env.local keys." }
-  }
+  const misconfig = supabaseMisconfigResult()
+  if (misconfig) return misconfig
 
   try {
     const email = normalizeEmail(input.email)
@@ -280,8 +307,7 @@ export async function signInAction(input: {
     revalidatePath("/")
     return { success: true, message: "Signed in." }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sign in failed."
-    return { success: false, error: message }
+    return { success: false, error: formatAuthError(err, "Sign in failed.") }
   }
 }
 
